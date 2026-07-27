@@ -1,0 +1,213 @@
+@import './tokens.css';
+@import 'leaflet/dist/leaflet.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* a phone's URL bar eats into 100% — dvh tracks it as the bar hides */
+@supports (height: 100dvh) {
+  #root {
+    height: 100dvh;
+  }
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  color: var(--text);
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: 0.12s;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+a.link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* ---- The map ---- */
+.mapwrap {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+.mapCanvas {
+  position: absolute;
+  inset: 0;
+}
+/* A long press must not raise iOS's text-selection callout over the map. */
+.mapCanvas {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.leaflet-popup-content {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.mapCanvas.painting,
+.mapCanvas.painting .leaflet-interactive {
+  cursor: crosshair;
+}
+/* Leaflet drops touch-action to pan-x/pan-y whenever dragging is off, which
+   hands the gesture to the browser and kills the pointermove stream mid-stroke.
+   Draw and paint modes both turn dragging off on purpose, so claim it back. */
+.mapCanvas.painting,
+.mapCanvas.drawingbox {
+  touch-action: none;
+}
+
+/* Leaflet parks its controls at z-index 1000, which paints the zoom buttons
+   over the search suggestions. App chrome starts at 600, so drop them below. */
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 500;
+}
+/* Everything that hangs below the top bar derives its offset from the bar, so
+   changing --chrome-h moves them all together. */
+.leaflet-top.leaflet-left {
+  top: calc(var(--chrome-top) + var(--chrome-h) + 16px);
+}
+
+/* Leaflet ships light-only chrome — repoint it at the tokens so the zoom
+   buttons and attribution follow the theme instead of glaring white. */
+.leaflet-bar {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-chip);
+}
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: var(--panel);
+  color: var(--text);
+  border-bottom-color: var(--border);
+}
+.leaflet-bar a:hover {
+  background: var(--hover-strong);
+}
+.leaflet-bar a.leaflet-disabled {
+  background: var(--panel);
+  color: var(--muted);
+  opacity: 0.5;
+}
+.leaflet-control-attribution {
+  background: var(--glass);
+  color: var(--muted);
+}
+.leaflet-control-attribution a {
+  color: var(--accent);
+}
+
+/* Pin popups */
+.leaflet-popup-content-wrapper {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-panel);
+}
+.leaflet-popup-tip {
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+  font-size: 12.5px;
+}
+.leaflet-popup-close-button {
+  color: var(--muted);
+}
+.pin-pop .c {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 10px;
+  white-space: nowrap;
+}
+.pin-pop .r {
+  display: flex;
+  gap: 6px;
+}
+.pin-pop button,
+.pin-pop a {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 7px 9px;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.pin-pop button:hover,
+.pin-pop a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.pin-pop .rm:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Cell number labels sit on imagery, so they are theme-invariant. */
+.cell-label {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ---- Focus mode: strip every control, leave the map and the grid ----
+   Cells stay tappable — that is the whole point of the mode. */
+body.focus .app-chrome {
+  display: none !important;
+}
+
+/* ---- Touch: no hover, so nothing may hide behind one ---- */
+@media (hover: none) {
+  input[type='range'] {
+    height: 32px;
+  }
+  input[type='range']::-webkit-slider-thumb {
+    width: 26px;
+    height: 26px;
+    margin-top: -10px;
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+  }
+}

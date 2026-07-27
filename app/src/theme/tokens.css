@@ -1,0 +1,60 @@
+/* GeoGrid design tokens.
+   Dark is the base; [data-theme=light] re-points the same names.
+   Nothing outside these two blocks may hardcode a colour, shadow or radius. */
+
+/* Tokens adapted from the PhotoClue design system (claude.ai/design) */
+/* Dark is the base; [data-theme=light] below re-points the same names. Nothing
+   outside these two blocks may hardcode a colour, or one theme will look wrong. */
+:root{
+  color-scheme:dark;
+  --bg:#0e1015; --panel:#16181c; --panel2:#1c1f25; --border:#282c34;
+  --border-strong:#3d4250; --input:#090a0d;
+  --text:#eff0fa; --text-strong:#ffffff; --muted:#9aa0b0;
+  --accent:#525dff; --on-accent:#ffffff; --accent-hover:#6e77ff;
+  --accent2:#2dd4bf; --danger:#ffb4ab;
+  --danger-soft:rgba(248,81,73,.14);
+  --hover:rgba(185,199,223,.07); --hover-strong:rgba(185,199,223,.13);
+  --glass:rgba(8,9,12,.86);
+  /* scrim = a plate for controls that sit on map imagery, so it stays dark in
+     both themes; the imagery underneath does not change with the theme */
+  --scrim:rgba(0,0,0,.55); --scrim-strong:rgba(0,0,0,.75); --on-scrim:#d6d9e3;
+  --ring:rgba(0,0,0,.45);
+  /* Tooltips read as a tier above the panels, so they invert in light mode. */
+  --tip-bg:#22262f; --tip-border:#343a46; --tip-text:#f2f4fb;
+  --tip-key-bg:rgba(255,255,255,.11); --tip-key-text:#c9cee0;
+  /* A toast is the same register as a tooltip — a transient message floating
+     over everything — so it borrows that plate. Defined by reference, not by
+     value, so the light theme's override carries through on its own. It must
+     not read from --accent2: that tracks the grid colour, which would leave
+     "Copied" changing colour with the user's palette pick. */
+  --toast-bg:var(--tip-bg); --toast-ink:var(--tip-text);
+  --shadow-panel:0 12px 34px rgba(0,0,0,.5); --shadow-chip:0 2px 7px rgba(0,0,0,.5);
+  --shadow-menu:0 8px 24px rgba(0,0,0,.4); --shadow-pop:0 18px 40px rgba(0,0,0,.5);
+  --shadow-suggest:0 -8px 28px rgba(0,0,0,.55); --shadow-thumb:0 1px 5px rgba(0,0,0,.55);
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --font-body:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  /* One height for every control in the top bar — the brand pill, the search
+     bar and the two corner buttons all read as one row. */
+  --chrome-h:40px;
+  --chrome-top:12px;
+  /* everything anchored to the bottom edge adds this, so the rail clears an
+     iPhone's home bar instead of sitting under it */
+  --safeb:env(safe-area-inset-bottom,0px);
+}
+:root[data-theme=light]{
+  color-scheme:light;
+  --bg:#f3f4f8; --panel:#ffffff; --panel2:#f1f2f7; --border:#dde0e9;
+  --border-strong:#b7bcc9; --input:#ffffff;
+  --text:#15171f; --text-strong:#0a0c12; --muted:#5d6373;
+  --accent:#525dff; --on-accent:#ffffff; --accent-hover:#3d48e6;
+  --accent2:#0d9488; --danger:#b3261e;
+  --danger-soft:rgba(179,38,30,.10);
+  --hover:rgba(21,23,31,.05); --hover-strong:rgba(21,23,31,.10);
+  --glass:rgba(255,255,255,.88);
+  --ring:rgba(21,23,31,.22);
+  --tip-bg:#1b1e26; --tip-border:#2b303b; --tip-text:#f4f5fa;
+  --tip-key-bg:rgba(255,255,255,.13); --tip-key-text:#ccd2e4;
+  --shadow-panel:0 12px 34px rgba(18,22,40,.16); --shadow-chip:0 2px 7px rgba(18,22,40,.14);
+  --shadow-menu:0 8px 24px rgba(18,22,40,.14); --shadow-pop:0 18px 40px rgba(18,22,40,.18);
+  --shadow-suggest:0 -8px 28px rgba(18,22,40,.16); --shadow-thumb:0 1px 5px rgba(18,22,40,.28);
+}

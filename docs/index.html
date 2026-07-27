@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GeoGrid — Search Grid → KML</title>
+<meta name="theme-color" content="#0e1015">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script>
+/* Paint the right theme on the very first frame — anything later flashes the
+   wrong one. Deliberately before the app bundle. */
+(function(){
+  var pick='system';
+  try{ pick=localStorage.getItem('geogrid.theme')||'system'; }catch(e){}
+  var light = pick==='light' || (pick==='system' &&
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+  document.documentElement.setAttribute('data-theme', light?'light':'dark');
+})();
+</script>
+  <script type="module" crossorigin src="./assets/index-DpSu8uqA.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-4Ph8eAid.css">
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>

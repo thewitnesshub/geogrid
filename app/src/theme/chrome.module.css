@@ -1,0 +1,938 @@
+/* The floating chrome: top bar, icon rail, popovers, overlays.
+   These are one system — the top bar's three groups share a grid cell and the
+   responsive rules move several of them together — so they share a stylesheet
+   rather than pretending to be independent. */
+
+/* ---------- Top bar ---------- */
+/* All three groups share one grid cell: brand pinned left, buttons pinned
+   right, search centred on the *whole* bar. Sharing a cell is what keeps the
+   search dead-centre regardless of how wide the brand pill is; three separate
+   tracks would shift it by half the difference between the sides.
+   --side-reserve is what the search must stay clear of on each side. */
+.topBar {
+  position: absolute;
+  top: var(--chrome-top);
+  left: 12px;
+  right: 12px;
+  z-index: 620;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
+  --side-reserve: 150px;
+}
+
+.chromeNav {
+  grid-area: 1/1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  height: var(--chrome-h);
+  padding: 0 6px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-panel);
+}
+
+.brandLink {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: opacity 0.12s ease;
+}
+.brandLink:hover {
+  opacity: 0.75;
+}
+.brand {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+.topRight {
+  grid-area: 1/1;
+  justify-self: end;
+  display: flex;
+  align-items: start;
+  gap: 10px;
+}
+
+/* position:relative so the suggestion list anchors to the bar, not the grid. */
+.searchBar {
+  grid-area: 1/1;
+  justify-self: center;
+  position: relative;
+  box-sizing: border-box;
+  width: min(440px, calc(100% - 2 * var(--side-reserve)));
+  height: var(--chrome-h);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-chip);
+  padding: 0 5px 0 12px;
+}
+.searchBar > svg {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.searchBar input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  padding: 0 2px;
+}
+.searchBar input::placeholder {
+  color: var(--muted);
+}
+.goBtn {
+  flex: 0 0 auto;
+  width: auto;
+  height: 28px;
+  padding: 0 14px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  border-radius: 7px;
+}
+.goBtn:hover {
+  background: var(--accent-hover);
+}
+
+/* The three top-right buttons share one look and the top bar's height. */
+.chromeBtn {
+  width: var(--chrome-h);
+  height: var(--chrome-h);
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-chip);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  flex: 0 0 auto;
+}
+.chromeBtn:hover:not(:disabled),
+.chromeBtn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--panel);
+}
+.chromeBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+/* Only shown once the search bar collapses — see the narrow-width block. */
+.searchToggle {
+  display: none;
+}
+
+/* The Ctl wrappers are just 40×40 boxes in the row; their dropdowns are
+   absolutely positioned so an open panel never grows the row. */
+.ctl {
+  position: relative;
+  flex: 0 0 auto;
+}
+.dropPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  display: none;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-panel);
+}
+.dropPanel.open {
+  display: flex;
+}
+
+.basemapPanel {
+  gap: 3px;
+  padding: 6px;
+  min-width: 158px;
+}
+.basemapPanel button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+.basemapPanel button:hover {
+  background: var(--panel2);
+  border-color: var(--border);
+}
+.basemapPanel button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.bmGroup {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--muted);
+  padding: 7px 10px 3px;
+}
+.bmGroup:first-child {
+  padding-top: 3px;
+}
+
+.exportPanel {
+  gap: 6px;
+  padding: 8px;
+  width: 210px;
+}
+.exportPanel button {
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.exportPanel button:hover {
+  border-color: var(--accent);
+  background: var(--hover);
+}
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.primary:hover {
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+.exportHint {
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* ---------- Kebab menu ---------- */
+.kebabWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+}
+.iconBtn:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+.menuDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  min-width: 190px;
+  display: none;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-menu);
+}
+.menuDropdown.open {
+  display: flex;
+}
+.menuLabel {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--muted);
+  padding: 6px 10px 4px;
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.menuItem:hover {
+  background: var(--hover);
+}
+.menuItem svg {
+  flex: 0 0 auto;
+  opacity: 0.8;
+}
+/* Qualified by .menuItem so it outranks `.menuItem svg`, which dims the leading
+   icon to .8 — an unqualified .tick would lose that cascade and never hide. */
+.menuItem .tick {
+  margin-left: auto;
+  color: var(--accent);
+  opacity: 0;
+}
+.menuItem[aria-checked='true'] .tick {
+  opacity: 1;
+}
+.menuItem[aria-checked='true'] {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+.menuSep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 6px;
+}
+.menuKey {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  padding: 2px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  line-height: 1;
+}
+
+/* ---------- Date picker, shared by the dated basemaps ---------- */
+.dateCtl {
+  position: absolute;
+  top: calc(var(--chrome-top) + var(--chrome-h) + 10px);
+  right: 12px;
+  z-index: 600;
+  display: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: var(--shadow-panel);
+  width: 236px;
+}
+.dateCtl.show {
+  display: block;
+}
+.senRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.senRow button {
+  width: 30px;
+  min-width: 30px;
+  padding: 0;
+  height: 32px;
+  border-radius: 7px;
+  background: var(--panel2);
+  font-size: 15px;
+  line-height: 1;
+}
+.senRow button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.senRow select {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  background: var(--input);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 7px;
+  font-size: 12.5px;
+  padding: 0 7px;
+  outline: none;
+}
+.senMeta {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* ---------- Bottom icon rail ---------- */
+.toolbox {
+  position: absolute;
+  bottom: calc(22px + var(--safeb));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-panel);
+  padding: 5px 7px;
+}
+/* static: popovers centre on the whole bar, not the icon */
+.railItem {
+  display: flex;
+}
+.railBtn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border-radius: 9px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.railBtn svg {
+  width: 18px;
+  height: 18px;
+}
+.railBtn:hover:not(:disabled) {
+  background: var(--hover);
+}
+.railBtn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.railBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.clearBtn:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.railDiv {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.railPop {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: var(--shadow-pop);
+  width: 236px;
+}
+.railPop.open {
+  display: block;
+}
+.railPopLabel {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.railPopTop {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.cellSizeVal {
+  color: var(--accent);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+/* Size popover: slider on the left, one swatch showing the current colour on
+   the right — the palette lives in a flyout off that swatch, so the resting
+   state stays a single row. */
+.railPopCols {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sliderCol {
+  flex: 1;
+  min-width: 0;
+}
+.colorCol {
+  flex: 0 0 auto;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+/* The flyout centres on the swatch, so it hangs off this wrapper rather than
+   the column — the column's divider padding would throw the centre off. */
+.swAnchor {
+  position: relative;
+  display: flex;
+}
+.swCurrent {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  box-shadow: 0 0 0 1px var(--ring) inset;
+}
+.swCurrent:hover {
+  border-color: var(--muted);
+}
+.colorFlyout {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(calc(-50% + var(--fly-shift, 0px)));
+  display: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: var(--shadow-pop);
+  z-index: 70;
+}
+.colorFlyout.open {
+  display: block;
+}
+.swRow {
+  display: grid;
+  grid-template-columns: repeat(4, 24px);
+  gap: 6px;
+}
+.swBtn {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px var(--ring) inset;
+}
+.swBtn:hover {
+  border-color: var(--muted);
+}
+.swBtn.active {
+  border-color: var(--text);
+}
+
+/* ---------- Cell-size slider ---------- */
+.railPop input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+.railPop input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--border);
+}
+.railPop input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  margin-top: -6px;
+  box-shadow: var(--shadow-thumb);
+}
+.railPop input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--border);
+}
+.railPop input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+.railPop input[type='range']:focus {
+  outline: none;
+}
+/* 100m/10km sit either side of the track, not on their own row below it —
+   one fewer line of height in a popover that is otherwise vertical padding. */
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.sliderRow input[type='range'] {
+  flex: 1;
+  min-width: 0;
+}
+.sliderEnd {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+/* ---------- Region autocomplete ---------- */
+.regionWrap {
+  position: relative;
+  width: 100%;
+}
+.regionInput {
+  width: 100%;
+  background: var(--input);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+}
+.regionInput:focus {
+  border-color: var(--accent);
+}
+.regionInput::placeholder {
+  color: var(--muted);
+}
+.suggest {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-suggest);
+  z-index: 50;
+  max-height: 236px;
+  overflow-y: auto;
+  display: none;
+}
+.suggest.open {
+  display: block;
+}
+/* The region box sits low on the rail so its list opens upward; the place
+   search bar is pinned to the top, so that one drops the other way. */
+.suggestDown {
+  top: calc(100% + 6px);
+  bottom: auto;
+  box-shadow: var(--shadow-panel);
+}
+.suggestItem {
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.3;
+}
+.suggestItem:last-child {
+  border-bottom: none;
+}
+.suggestItem:hover,
+.suggestItem.active {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.suggestItem .sub {
+  display: block;
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.suggestItem:hover .sub,
+.suggestItem.active .sub {
+  color: #c1c5ff;
+}
+.suggestNote {
+  padding: 8px 10px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ---------- Overlays ---------- */
+.modeBadge {
+  position: absolute;
+  top: calc(var(--chrome-top) + var(--chrome-h) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  background: var(--accent);
+  color: var(--on-accent);
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: var(--shadow-chip);
+  opacity: 1;
+  transition: opacity 0.7s ease;
+}
+/* A hint that has served its purpose leaves quietly rather than blinking out. */
+.modeBadge.fading {
+  opacity: 0;
+}
+
+.statsBar {
+  position: absolute;
+  bottom: calc(26px + var(--safeb));
+  right: 46px;
+  z-index: 600;
+  display: flex;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: var(--shadow-chip);
+  overflow: hidden;
+}
+.fstat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 13px;
+  min-width: 58px;
+}
+.fstat + .fstat {
+  border-left: 1px solid var(--border);
+}
+.fstat .n {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+.fstat .l {
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.statDone {
+  color: var(--accent2) !important;
+}
+.statLeft {
+  color: var(--accent) !important;
+}
+
+.gridNote {
+  position: absolute;
+  bottom: calc(96px + var(--safeb));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  margin: 0;
+  background: var(--panel);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 6px 12px;
+  box-shadow: var(--shadow-chip);
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--danger);
+}
+
+.toast {
+  position: absolute;
+  bottom: calc(20px + var(--safeb));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 700;
+  background: var(--toast-bg);
+  color: var(--toast-ink);
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+}
+
+.focusExit {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  z-index: 640;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-chip);
+  opacity: 0.3;
+  transition: opacity 0.18s ease;
+}
+.focusExit:hover {
+  opacity: 1;
+  color: var(--text);
+}
+@media (hover: none) {
+  .focusExit {
+    opacity: 0.8;
+  }
+}
+
+/* ---------- Right-click context menu ---------- */
+.ctxMenu {
+  position: absolute;
+  z-index: 900;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 5px;
+  box-shadow: var(--shadow-panel);
+  min-width: 196px;
+}
+.ctxCoords {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  padding: 7px 10px 9px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.ctxItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 9px 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.ctxItem:hover {
+  background: var(--panel2);
+  border-color: var(--border);
+}
+.ctxItem svg {
+  flex: 0 0 auto;
+  opacity: 0.75;
+}
+
+/* ---------- Responsive: keep the floating bars from colliding ---------- */
+/* The stats bar has nowhere left to go once the toolbox spans the width. */
+@media (max-width: 840px) {
+  .statsBar {
+    display: none;
+  }
+}
+/* Phone: the search bar can no longer sit between the corner controls without
+   clipping its placeholder, so it collapses to the magnifier and unfolds onto
+   its own centred row when pressed. That frees the top row, which is what lets
+   the wordmark stay put. Anything anchored below the bar drops a row while the
+   search is open. */
+@media (max-width: 640px) {
+  .searchToggle {
+    display: flex;
+  }
+  .searchBar {
+    display: none;
+  }
+  :global(body.searchopen) .topBar {
+    grid-template-rows: auto auto;
+    row-gap: 8px;
+  }
+  :global(body.searchopen) .chromeNav,
+  :global(body.searchopen) .topRight {
+    grid-row: 1;
+  }
+  :global(body.searchopen) .searchBar {
+    display: flex;
+    grid-row: 2;
+    width: min(440px, 100%);
+  }
+  :global(body.searchopen) .dateCtl {
+    top: calc(var(--chrome-top) + var(--chrome-h) * 2 + 18px);
+  }
+  :global(body.searchopen) .modeBadge {
+    top: calc(var(--chrome-top) + var(--chrome-h) * 2 + 18px);
+  }
+  /* iOS zooms the whole page when a focused field is under 16px */
+  .searchBar input,
+  .regionInput {
+    font-size: 16px;
+  }
+  .dateCtl {
+    width: min(236px, calc(100vw - 24px));
+  }
+  .modeBadge {
+    width: max-content;
+    max-width: calc(100vw - 24px);
+  }
+  .railPop {
+    width: min(236px, calc(100vw - 24px));
+  }
+}
+/* smallest phones: shrink the rail so six icons still fit on one row */
+@media (max-width: 420px) {
+  .toolbox {
+    gap: 1px;
+    padding: 5px;
+  }
+  .railBtn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+  .railDiv {
+    margin: 0 2px;
+  }
+}

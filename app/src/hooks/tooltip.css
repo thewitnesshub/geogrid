@@ -1,0 +1,45 @@
+/* The tooltip node is created imperatively and lives on <body>, outside the
+   React tree, so its styles are global rather than a module. */
+#gg-tip {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  max-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  background: var(--tip-bg);
+  border: 1px solid var(--tip-border);
+  color: var(--tip-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  padding: 6px 9px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-menu);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(0, var(--tip-off, 4px), 0) scale(0.97);
+  transform-origin: var(--tip-origin, 50% 0);
+  transition: opacity 0.1s ease, transform 0.1s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+#gg-tip.show {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+#gg-tip.instant {
+  transition-duration: 0s;
+}
+#gg-tip .tip-key {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: var(--tip-key-bg);
+  color: var(--tip-key-text);
+}

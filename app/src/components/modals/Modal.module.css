@@ -1,0 +1,113 @@
+/* Both modals share one shell. The map keeps its own always-visible attribution
+   control; these hold the fuller notices and the shortcut list. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 8, 14, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.card {
+  width: min(460px, 100%);
+  max-height: min(560px, calc(100% - 8px));
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.title {
+  margin: 0;
+  flex: 1;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.close {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+.close:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+.body {
+  padding: 4px 16px 16px;
+  overflow-y: auto;
+}
+.body section {
+  margin-top: 14px;
+}
+.body h3 {
+  margin: 0 0 5px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.body p {
+  margin: 0 0 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* ---- Shortcut rows ---- */
+.scRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.scRow:last-child {
+  border-bottom: none;
+}
+.scLabel {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.scKeys {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+}
+.scKeys kbd {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1;
+  color: var(--text);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 4px 6px;
+  min-width: 11px;
+  text-align: center;
+}
