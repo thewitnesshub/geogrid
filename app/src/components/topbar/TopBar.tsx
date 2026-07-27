@@ -9,8 +9,6 @@ import type { ThemeChoice } from '../../lib/types'
 interface Props {
   theme: ThemeChoice
   onTheme: (t: ThemeChoice) => void
-  statsShown: boolean
-  onStats: (b: boolean) => void
   onShortcuts: () => void
   onCredits: () => void
   searchOpen: boolean
@@ -47,8 +45,6 @@ export function TopBar(p: Props) {
         <AppMenu
           theme={p.theme}
           onTheme={p.onTheme}
-          statsShown={p.statsShown}
-          onStats={p.onStats}
           onShortcuts={p.onShortcuts}
           onCredits={p.onCredits}
         />

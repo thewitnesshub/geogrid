@@ -14,9 +14,11 @@ export function useTheme() {
       c === 'light' ||
       (c === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches)
     document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark')
-    document
-      .querySelector('meta[name=theme-color]')
-      ?.setAttribute('content', light ? '#f3f4f8' : '#0e1015')
+    // Read the field back off the token rather than restating it — a second
+    // copy of --osw-bg here is drift waiting to happen, and the browser chrome
+    // sitting a shade off the app is exactly how it shows up.
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--osw-bg').trim()
+    document.querySelector('meta[name=theme-color]')?.setAttribute('content', bg)
   }, [])
 
   useEffect(() => {

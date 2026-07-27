@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import L, { type LatLng, type LatLngBounds, type Rectangle, type TileLayer } from 'leaflet'
-import { useGrid } from '../../state/GridStore'
+import { useGrid, type PaintMode } from '../../state/GridStore'
 import { bases, labelsOverlay } from '../../lib/basemaps'
 import { DATED, isDated, type DatedEntry } from '../../lib/datedSources'
 import { buildCellBounds, type RegionFeature } from '../../lib/gridMath'
@@ -9,6 +9,12 @@ import { fmtLatLng, earthUrl, sentinelUrl, uid } from '../../lib/geo'
 import type { Cell } from '../../lib/types'
 import { ContextMenu, type CtxTarget } from './ContextMenu'
 import { useToast } from '../../hooks/useToast'
+
+/** Read a design token for the marker SVGs, which are built as markup strings
+ *  and so cannot inherit it through the cascade. Only ever called with
+ *  theme-invariant tokens, so a marker never needs rebuilding on a theme flip. */
+const token = (name: string) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 
 interface Props {
   /** Hints are shown by the parent; the map reports events that should retire them. */
@@ -45,7 +51,7 @@ export function MapCanvas({
   const region = useRef<RegionFeature | null>(null)
   const paint = useRef({ mode: null as 'mark' | 'erase' | null, stroke: false, dragWasOn: false })
   const drawing = useRef(false)
-  const paintArmed = useRef(false)
+  const paintMode = useRef<PaintMode>(null)
   const cellKmRef = useRef(g.cellKm)
   const gridColorRef = useRef(g.gridColor)
   const datedToken = useRef(0)
@@ -67,16 +73,16 @@ export function MapCanvas({
     if (!map) return
     map.getContainer().classList.toggle('drawingbox', g.drawing)
     if (g.drawing) map.dragging.disable()
-    else if (!paintArmed.current) map.dragging.enable()
+    else if (!paintMode.current) map.dragging.enable()
   }, [g.drawing, g.mapRef])
   useEffect(() => {
-    paintArmed.current = g.paintArmed
+    paintMode.current = g.paintMode
     const map = g.mapRef.current
     if (!map) return
-    map.getContainer().classList.toggle('painting', g.paintArmed)
-    if (g.paintArmed) map.dragging.disable()
+    map.getContainer().classList.toggle('painting', !!g.paintMode)
+    if (g.paintMode) map.dragging.disable()
     else if (!drawing.current) map.dragging.enable()
-  }, [g.paintArmed, g.mapRef])
+  }, [g.paintMode, g.mapRef])
 
   const styleFor = (c: Cell): L.PathOptions =>
     c.searched
@@ -87,16 +93,21 @@ export function MapCanvas({
 
   const commitCells = () => {
     g.setCells([...cellsRef.current])
-    g.bumpRevision()
   }
 
-  /** Mark or erase one cell; direction is set by the stroke's first cell. */
+  /**
+   * Mark or erase one cell; direction is set by the stroke's first cell.
+   *
+   * Deliberately does no React work. A mark is one Leaflet restyle and nothing
+   * else — no state is bumped, because nothing on screen counts the marks any
+   * more and the KML is built when it is asked for. That is what keeps the map
+   * draggable the instant a cell is tapped.
+   */
   const applyPaint = (c: Cell) => {
     const want = paint.current.mode === 'mark'
     if (c.searched === want) return
     c.searched = want
     paintCell(c)
-    g.bumpRevision()
     onCellMarked()
   }
 
@@ -212,7 +223,6 @@ export function MapCanvas({
         if (paint.current.stroke) return
         cell.searched = !cell.searched
         paintCell(cell)
-        g.bumpRevision()
         onCellMarked()
       })
       // Cmd/Ctrl-drag paints without leaving the current tool.
@@ -251,11 +261,14 @@ export function MapCanvas({
     let painting = false
 
     const down = (e: PointerEvent) => {
-      if (!paintArmed.current || !cellsRef.current.length || e.isPrimary === false) return
+      if (!paintMode.current || !cellsRef.current.length || e.isPrimary === false) return
       const c = cellAt(map.mouseEventToLatLng(e))
       if (!c) return
       painting = true
-      paint.current.mode = c.searched ? 'erase' : 'mark'
+      // The eraser only ever clears. The brush takes its direction from the
+      // cell it started on, so one tool both marks and un-marks.
+      paint.current.mode =
+        paintMode.current === 'erase' ? 'erase' : c.searched ? 'erase' : 'mark'
       paint.current.stroke = true
       applyPaint(c)
     }
@@ -291,12 +304,12 @@ export function MapCanvas({
         map.dragging.disable()
         paint.current.dragWasOn = true
       }
-      if (cellsRef.current.length && !drawing.current && !paintArmed.current) onModifierMode(true)
+      if (cellsRef.current.length && !drawing.current && !paintMode.current) onModifierMode(true)
     }
     const end = () => {
       paint.current.mode = null
       onModifierMode(false)
-      if (paintArmed.current) return
+      if (paintMode.current) return
       map.getContainer().classList.remove('painting')
       if (paint.current.dragWasOn) {
         map.dragging.enable()
@@ -419,7 +432,7 @@ export function MapCanvas({
         commitCells()
       },
       setDrawMode: (on) => g.setDrawing(on),
-      setPaintArmed: (on) => g.setPaintArmed(on),
+      setPaintMode: (m) => g.setPaintMode(m),
       flyTo: (lat, lng, zoom) => g.mapRef.current?.setView([lat, lng], zoom ?? g.mapRef.current.getZoom()),
       fitBounds: (b) => g.mapRef.current?.fitBounds(b),
       setRegion: (geo, label) => {
@@ -444,12 +457,17 @@ export function MapCanvas({
     const map = g.mapRef.current
     if (!map) return
     const id = uid()
+    // A dropped pin is evidence, so it takes an identity colour; the dark
+    // outline is legibility over imagery, so it takes the scrim. Both are
+    // theme-invariant, which is why reading them once here is safe.
+    const ink = token('--osw-id-red')
+    const outline = token('--osw-scrim-strong')
     const marker = L.marker(ll, {
       icon: L.divIcon({
         className: '',
         iconSize: [24, 32],
         iconAnchor: [12, 31],
-        html: `<svg width="24" height="32" viewBox="0 0 24 32"><path d="M12 1C6.5 1 2 5.5 2 11c0 7.5 10 20 10 20s10-12.5 10-20c0-5.5-4.5-10-10-10Z" fill="#f85149" stroke="#0e1015" stroke-width="2"/><circle cx="12" cy="11" r="3.6" fill="#0e1015"/></svg>`,
+        html: `<svg width="24" height="32" viewBox="0 0 24 32"><path d="M12 1C6.5 1 2 5.5 2 11c0 7.5 10 20 10 20s10-12.5 10-20c0-5.5-4.5-10-10-10Z" fill="${ink}" stroke="${outline}" stroke-width="2"/><circle cx="12" cy="11" r="3.6" fill="${outline}"/></svg>`,
       }),
     }).addTo(layers.current.pinLayer)
     marker.bindPopup(

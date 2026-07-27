@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import styles from '../../theme/chrome.module.css'
-import { parseCoords } from '../../lib/geo'
+import { parseCoords, splitName } from '../../lib/geo'
 import { useGrid } from '../../state/GridStore'
 
 interface Hit {
@@ -58,8 +58,7 @@ export function PlaceSearch({ onDone }: { onDone: () => void }) {
       .then((r) => r.json())
       .then((list: any[]) => {
         const hits: Hit[] = (list ?? []).map((d) => ({
-          label: d.display_name.split(',')[0],
-          sub: d.display_name,
+          ...splitName(d.display_name),
           lat: +d.lat,
           lng: +d.lon,
           bbox: d.boundingbox ? (d.boundingbox.map(parseFloat) as Hit['bbox']) : null,
@@ -163,7 +162,7 @@ export function PlaceSearch({ onDone }: { onDone: () => void }) {
             onClick={() => pick(h)}
           >
             {h.label}
-            <span className="sub">{h.sub}</span>
+            {h.sub && <span className={styles.sub}>{h.sub}</span>}
           </div>
         ))}
         {note && <div className={styles.suggestNote}>{note}</div>}

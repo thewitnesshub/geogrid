@@ -10,9 +10,9 @@ body,
 #root {
   margin: 0;
   height: 100%;
-  font-family: var(--font-body);
-  background: var(--bg);
-  color: var(--text);
+  font-family: var(--osw-font-sans);
+  background: var(--osw-bg);
+  color: var(--osw-text);
 }
 
 /* a phone's URL bar eats into 100% — dvh tracks it as the bar hides */
@@ -31,11 +31,11 @@ textarea {
 
 button {
   cursor: pointer;
-  border: 1px solid var(--border);
-  background: var(--panel2);
-  color: var(--text);
+  border: 1px solid var(--osw-border);
+  background: var(--osw-surface-high);
+  color: var(--osw-text);
   padding: 9px 10px;
-  border-radius: 6px;
+  border-radius: var(--osw-radius-xs);
   font-size: 12.5px;
   font-weight: 500;
   transition: 0.12s;
@@ -45,8 +45,18 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Pointer-first tool: buttons and toggle controls never paint a focus ring —
+   neither ours nor the UA default. Any keypress (Esc to cancel a draw or
+   leave a mode) upgrades the browser's input modality to keyboard, which
+   retroactively rings whatever the pointer last clicked: a phantom highlight
+   around the tool you just escaped. Text fields are exempt — their focus
+   border is an engaged state, not a ring. */
+:where(button, [role='button'], input[type='checkbox'], input[type='range']):focus-visible {
+  outline: none;
+}
+
 a.link {
-  color: var(--accent);
+  color: var(--osw-brand-ink);
   text-decoration: none;
 }
 
@@ -89,62 +99,71 @@ a.link {
   z-index: 500;
 }
 /* Everything that hangs below the top bar derives its offset from the bar, so
-   changing --chrome-h moves them all together. */
+   changing --osw-chrome-h moves them all together. */
 .leaflet-top.leaflet-left {
-  top: calc(var(--chrome-top) + var(--chrome-h) + 16px);
+  top: calc(var(--osw-chrome-inset) + var(--osw-chrome-h) + 16px);
 }
 
 /* Leaflet ships light-only chrome — repoint it at the tokens so the zoom
    buttons and attribution follow the theme instead of glaring white. */
+
+/* Leaflet's own container default is #ddd, which is the field showing through
+   wherever a tile has not arrived yet — a pale grey flash on every pan in dark
+   mode, and past the edge of the world always. The map IS the canvas here, so
+   it takes the canvas token. */
+.leaflet-container {
+  background: var(--osw-bg);
+}
 .leaflet-bar {
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-chip);
+  border: 1px solid var(--osw-border);
+  box-shadow: var(--osw-shadow-chip);
 }
 .leaflet-bar a,
 .leaflet-bar a:hover {
-  background: var(--panel);
-  color: var(--text);
-  border-bottom-color: var(--border);
+  background: var(--osw-surface);
+  color: var(--osw-text);
+  border-bottom-color: var(--osw-border);
 }
 .leaflet-bar a:hover {
-  background: var(--hover-strong);
+  background: var(--osw-hover-strong);
 }
 .leaflet-bar a.leaflet-disabled {
-  background: var(--panel);
-  color: var(--muted);
+  background: var(--osw-surface);
+  color: var(--osw-text-muted);
   opacity: 0.5;
 }
 .leaflet-control-attribution {
-  background: var(--glass);
-  color: var(--muted);
+  background: var(--osw-glass);
+  color: var(--osw-text-muted);
 }
 .leaflet-control-attribution a {
-  color: var(--accent);
+  color: var(--osw-brand-ink);
 }
 
 /* Pin popups */
 .leaflet-popup-content-wrapper {
-  background: var(--panel);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow-panel);
+  background: var(--osw-surface);
+  color: var(--osw-text);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-lg);
+  box-shadow: var(--osw-shadow-popover);
 }
 .leaflet-popup-tip {
-  background: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
 }
 .leaflet-popup-content {
   margin: 12px 14px;
   font-size: 12.5px;
 }
 .leaflet-popup-close-button {
-  color: var(--muted);
+  color: var(--osw-text-muted);
 }
 .pin-pop .c {
-  font-family: var(--font-mono);
+  font-family: var(--osw-font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
-  color: var(--text);
+  color: var(--osw-text);
   margin-bottom: 10px;
   white-space: nowrap;
 }
@@ -159,32 +178,32 @@ a.link {
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  background: var(--panel2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 7px;
+  background: var(--osw-surface-high);
+  border: 1px solid var(--osw-border);
+  color: var(--osw-text);
+  border-radius: var(--osw-radius-sm);
   padding: 7px 9px;
   font-size: 11.5px;
   white-space: nowrap;
 }
 .pin-pop button:hover,
 .pin-pop a:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--osw-border-strong);
+  background: var(--osw-hover);
 }
 .pin-pop .rm:hover {
-  border-color: var(--danger);
-  color: var(--danger);
+  border-color: var(--osw-danger);
+  color: var(--osw-danger);
 }
 
 /* Cell number labels sit on imagery, so they are theme-invariant. */
 .cell-label {
   background: transparent;
   border: none;
-  color: #fff;
+  color: var(--osw-on-scrim);
   font-size: 11px;
   font-weight: 600;
-  text-shadow: 0 0 3px #000, 0 0 3px #000;
+  text-shadow: var(--osw-shadow-text-halo);
   text-align: center;
   pointer-events: none;
   white-space: nowrap;

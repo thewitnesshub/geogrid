@@ -8,19 +8,21 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(6, 8, 14, 0.55);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  /* The modal covers the map, so its backdrop is the theme-invariant scrim —
+     the same plate every on-imagery control uses. No blur: at 60% black the
+     imagery is already suppressed, and --osw-blur is the glass recipe, which
+     this is not. */
+  background: var(--osw-scrim);
 }
 .card {
   width: min(460px, 100%);
   max-height: min(560px, calc(100% - 8px));
   display: flex;
   flex-direction: column;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--shadow-pop);
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-xl);
+  box-shadow: var(--osw-shadow-popover);
   overflow: hidden;
 }
 .head {
@@ -28,14 +30,14 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--osw-border);
 }
 .title {
   margin: 0;
   flex: 1;
   font-size: 14.5px;
   font-weight: 700;
-  color: var(--text-strong);
+  color: var(--osw-text-strong);
 }
 .close {
   width: 30px;
@@ -45,15 +47,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-md);
   background: transparent;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   font-size: 13px;
 }
 .close:hover {
-  color: var(--text);
-  background: var(--hover);
+  color: var(--osw-text);
+  background: var(--osw-hover);
 }
 .body {
   padding: 4px 16px 16px;
@@ -67,14 +69,14 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   font-weight: 600;
 }
 .body p {
   margin: 0 0 6px;
   font-size: 12px;
   line-height: 1.6;
-  color: var(--text);
+  color: var(--osw-text);
 }
 
 /* ---- Shortcut rows ---- */
@@ -83,7 +85,7 @@
   align-items: center;
   gap: 12px;
   padding: 7px 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--osw-border);
 }
 .scRow:last-child {
   border-bottom: none;
@@ -91,7 +93,7 @@
 .scLabel {
   flex: 1;
   font-size: 12.5px;
-  color: var(--text);
+  color: var(--osw-text);
 }
 .scKeys {
   flex: 0 0 auto;
@@ -99,14 +101,14 @@
   gap: 4px;
 }
 .scKeys kbd {
-  font-family: var(--font-mono);
+  font-family: var(--osw-font-mono);
   font-size: 10.5px;
   line-height: 1;
-  color: var(--text);
-  background: var(--panel2);
-  border: 1px solid var(--border);
+  color: var(--osw-text);
+  background: var(--osw-surface-high);
+  border: 1px solid var(--osw-border);
   border-bottom-width: 2px;
-  border-radius: 5px;
+  border-radius: var(--osw-radius-xxs);
   padding: 4px 6px;
   min-width: 11px;
   text-align: center;

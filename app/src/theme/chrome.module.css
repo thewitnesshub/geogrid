@@ -11,9 +11,9 @@
    --side-reserve is what the search must stay clear of on each side. */
 .topBar {
   position: absolute;
-  top: var(--chrome-top);
-  left: 12px;
-  right: 12px;
+  top: var(--osw-chrome-inset);
+  left: var(--osw-chrome-inset);
+  right: var(--osw-chrome-inset);
   z-index: 620;
   display: grid;
   grid-template-columns: 1fr;
@@ -28,14 +28,14 @@
   align-items: center;
   gap: 4px;
   box-sizing: border-box;
-  height: var(--chrome-h);
+  height: var(--osw-chrome-h);
   padding: 0 6px 0 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-panel);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-xl);
+  background: var(--osw-glass);
+  backdrop-filter: blur(var(--osw-blur));
+  -webkit-backdrop-filter: blur(var(--osw-blur));
+  box-shadow: var(--osw-shadow-island);
 }
 
 .brandLink {
@@ -52,7 +52,7 @@
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--text-strong);
+  color: var(--osw-text-strong);
   white-space: nowrap;
 }
 
@@ -71,18 +71,18 @@
   position: relative;
   box-sizing: border-box;
   width: min(440px, calc(100% - 2 * var(--side-reserve)));
-  height: var(--chrome-h);
+  height: var(--osw-chrome-h);
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow-chip);
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-xl);
+  box-shadow: var(--osw-shadow-chip);
   padding: 0 5px 0 12px;
 }
 .searchBar > svg {
-  color: var(--muted);
+  color: var(--osw-text-muted);
   flex: 0 0 auto;
 }
 .searchBar input {
@@ -90,49 +90,62 @@
   min-width: 0;
   background: transparent;
   border: none;
-  color: var(--text);
+  color: var(--osw-text);
   font-size: 13px;
   outline: none;
   padding: 0 2px;
 }
 .searchBar input::placeholder {
-  color: var(--muted);
+  color: var(--osw-text-muted);
 }
 .goBtn {
   flex: 0 0 auto;
   width: auto;
   height: 28px;
   padding: 0 14px;
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+  background: var(--osw-brand);
+  border-color: var(--osw-brand);
+  color: var(--osw-on-brand);
   font-weight: 600;
-  border-radius: 7px;
+  border-radius: var(--osw-radius-sm);
 }
 .goBtn:hover {
-  background: var(--accent-hover);
+  background: var(--osw-brand-hover);
+  border-color: var(--osw-brand-hover);
+}
+.goBtn:active {
+  background: var(--osw-brand-press);
+  border-color: var(--osw-brand-press);
 }
 
 /* The three top-right buttons share one look and the top bar's height. */
 .chromeBtn {
-  width: var(--chrome-h);
-  height: var(--chrome-h);
+  width: var(--osw-chrome-h);
+  height: var(--osw-chrome-h);
   padding: 0;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow-chip);
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-xl);
+  box-shadow: var(--osw-shadow-chip);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text);
+  color: var(--osw-text);
   flex: 0 0 auto;
 }
-.chromeBtn:hover:not(:disabled),
-.chromeBtn.active {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--panel);
+/* Ghost hover: neutral wash, never the accent — the accent here would claim one
+   of its four jobs without doing any of them. */
+.chromeBtn:hover:not(:disabled) {
+  border-color: var(--osw-border-strong);
+  background: var(--osw-hover);
+}
+/* Held open: the wash + its mandatory hairline, and it outranks hover so the
+   button you are holding does not grey out under the pointer. */
+.chromeBtn.active,
+.chromeBtn.active:hover:not(:disabled) {
+  background: var(--osw-selected);
+  border-color: var(--osw-selected-edge);
+  color: var(--osw-text-strong);
 }
 .chromeBtn:disabled {
   opacity: 0.4;
@@ -156,10 +169,10 @@
   z-index: 10;
   display: none;
   flex-direction: column;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow-panel);
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-lg);
+  box-shadow: var(--osw-shadow-menu);
 }
 .dropPanel.open {
   display: flex;
@@ -176,25 +189,28 @@
   background: transparent;
   border: 1px solid transparent;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: var(--osw-radius-xs);
   font-size: 12px;
-  color: var(--text);
+  color: var(--osw-text);
 }
 .basemapPanel button:hover {
-  background: var(--panel2);
-  border-color: var(--border);
+  background: var(--osw-hover);
+  border-color: var(--osw-border);
 }
-.basemapPanel button.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+/* The basemap in use is a state, not an action — the wash register, held under
+   the pointer. */
+.basemapPanel button.active,
+.basemapPanel button.active:hover {
+  background: var(--osw-selected);
+  border-color: var(--osw-selected-edge);
+  color: var(--osw-text-strong);
   font-weight: 600;
 }
 .bmGroup {
   font-size: 9.5px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   padding: 7px 10px 3px;
 }
 .bmGroup:first-child {
@@ -209,27 +225,32 @@
 .exportPanel button {
   width: 100%;
   padding: 9px 10px;
-  border-radius: 6px;
+  border-radius: var(--osw-radius-xs);
   font-size: 12.5px;
   font-weight: 500;
 }
 .exportPanel button:hover {
-  border-color: var(--accent);
-  background: var(--hover);
+  border-color: var(--osw-border-strong);
+  background: var(--osw-hover);
 }
+/* The one solid accent on this panel: the export everyone came here to press. */
 .primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+  background: var(--osw-brand);
+  border-color: var(--osw-brand);
+  color: var(--osw-on-brand);
   font-weight: 600;
 }
 .primary:hover {
-  background: var(--accent-hover) !important;
-  border-color: var(--accent-hover) !important;
+  background: var(--osw-brand-hover) !important;
+  border-color: var(--osw-brand-hover) !important;
+}
+.primary:active {
+  background: var(--osw-brand-press) !important;
+  border-color: var(--osw-brand-press) !important;
 }
 .exportHint {
   font-size: 10.5px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   line-height: 1.45;
 }
 
@@ -247,13 +268,13 @@
   flex-shrink: 0;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--osw-radius-md);
   background: transparent;
-  color: var(--muted);
+  color: var(--osw-text-muted);
 }
 .iconBtn:hover {
-  color: var(--text);
-  background: var(--hover);
+  color: var(--osw-text);
+  background: var(--osw-hover);
 }
 .menuDropdown {
   position: absolute;
@@ -264,10 +285,10 @@
   display: none;
   flex-direction: column;
   padding: 4px;
-  background: var(--panel2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow-menu);
+  background: var(--osw-surface-high);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-lg);
+  box-shadow: var(--osw-shadow-menu);
 }
 .menuDropdown.open {
   display: flex;
@@ -276,7 +297,7 @@
   font-size: 9.5px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   padding: 6px 10px 4px;
 }
 .menuItem {
@@ -288,12 +309,12 @@
   background: transparent;
   border: 1px solid transparent;
   padding: 7px 10px;
-  border-radius: 6px;
+  border-radius: var(--osw-radius-xs);
   font-size: 12.5px;
-  color: var(--text);
+  color: var(--osw-text);
 }
 .menuItem:hover {
-  background: var(--hover);
+  background: var(--osw-hover);
 }
 .menuItem svg {
   flex: 0 0 auto;
@@ -303,44 +324,44 @@
    icon to .8 — an unqualified .tick would lose that cascade and never hide. */
 .menuItem .tick {
   margin-left: auto;
-  color: var(--accent);
+  color: var(--osw-brand-ink);
   opacity: 0;
 }
 .menuItem[aria-checked='true'] .tick {
   opacity: 1;
 }
 .menuItem[aria-checked='true'] {
-  color: var(--text-strong);
+  color: var(--osw-text-strong);
   font-weight: 600;
 }
 .menuSep {
   height: 1px;
-  background: var(--border);
+  background: var(--osw-border);
   margin: 4px 6px;
 }
 .menuKey {
   margin-left: auto;
-  font-family: var(--font-mono);
+  font-family: var(--osw-font-mono);
   font-size: 10.5px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   padding: 2px 5px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-xxs);
   line-height: 1;
 }
 
 /* ---------- Date picker, shared by the dated basemaps ---------- */
 .dateCtl {
   position: absolute;
-  top: calc(var(--chrome-top) + var(--chrome-h) + 10px);
-  right: 12px;
+  top: calc(var(--osw-chrome-inset) + var(--osw-chrome-h) + 10px);
+  right: var(--osw-chrome-inset);
   z-index: 600;
   display: none;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-lg);
   padding: 8px;
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--osw-shadow-popover);
   width: 236px;
 }
 .dateCtl.show {
@@ -356,30 +377,30 @@
   min-width: 30px;
   padding: 0;
   height: 32px;
-  border-radius: 7px;
-  background: var(--panel2);
+  border-radius: var(--osw-radius-sm);
+  background: var(--osw-surface-high);
   font-size: 15px;
   line-height: 1;
 }
 .senRow button:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--osw-border-strong);
+  background: var(--osw-surface-highest);
 }
 .senRow select {
   flex: 1;
   min-width: 0;
   height: 32px;
-  background: var(--input);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 7px;
+  background: var(--osw-surface-low);
+  border: 1px solid var(--osw-border);
+  color: var(--osw-text);
+  border-radius: var(--osw-radius-sm);
   font-size: 12.5px;
   padding: 0 7px;
   outline: none;
 }
 .senMeta {
   font-size: 10.5px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   margin-top: 6px;
   line-height: 1.4;
 }
@@ -387,19 +408,19 @@
 /* ---------- Bottom icon rail ---------- */
 .toolbox {
   position: absolute;
-  bottom: calc(22px + var(--safeb));
+  bottom: calc(22px + var(--osw-safe-b));
   left: 50%;
   transform: translateX(-50%);
   z-index: 600;
   display: flex;
   align-items: center;
   gap: 4px;
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--shadow-panel);
+  background: var(--osw-glass);
+  backdrop-filter: blur(var(--osw-blur));
+  -webkit-backdrop-filter: blur(var(--osw-blur));
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-xl);
+  box-shadow: var(--osw-shadow-island);
   padding: 5px 7px;
 }
 /* static: popovers centre on the whole bar, not the icon */
@@ -411,10 +432,10 @@
   height: 40px;
   min-width: 40px;
   padding: 0;
-  border-radius: 9px;
+  border-radius: var(--osw-radius-rail);
   background: transparent;
   border: 1px solid transparent;
-  color: var(--text);
+  color: var(--osw-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -424,26 +445,32 @@
   height: 18px;
 }
 .railBtn:hover:not(:disabled) {
-  background: var(--hover);
+  background: var(--osw-hover-strong);
+  color: var(--osw-text-strong);
 }
-.railBtn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+/* The armed tool. This bar is glass over map imagery, where the wash alone
+   falls to 1.07:1 against its own bar in light mode over a dark tile — the
+   inset hairline is what the state actually is here, not a finishing touch.
+   Held under the pointer, so arming a tool never dims it. */
+.railBtn.active,
+.railBtn.active:hover:not(:disabled) {
+  background: var(--osw-selected);
+  box-shadow: inset 0 0 0 1px var(--osw-selected-edge);
+  color: var(--osw-text-strong);
 }
 .railBtn:disabled {
-  opacity: 0.3;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 .clearBtn:hover:not(:disabled) {
-  background: var(--danger-soft);
-  border-color: var(--danger);
-  color: var(--danger);
+  background: rgba(var(--osw-danger-rgb), 0.14);
+  border-color: var(--osw-danger);
+  color: var(--osw-danger);
 }
 .railDiv {
   width: 1px;
   height: 24px;
-  background: var(--border);
+  background: var(--osw-border);
   margin: 0 3px;
   flex-shrink: 0;
 }
@@ -454,11 +481,11 @@
   left: 50%;
   transform: translateX(-50%);
   display: none;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-lg);
   padding: 12px;
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--osw-shadow-popover);
   width: 236px;
 }
 .railPop.open {
@@ -466,19 +493,24 @@
 }
 .railPopLabel {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   margin-bottom: 7px;
 }
 .railPopTop {
   display: flex;
   justify-content: space-between;
   font-size: 11.5px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
 }
+/* A live measurement: the data voice, structure tone, and tabular figures with
+   a reserved width so the popover does not twitch as the slider moves. */
 .cellSizeVal {
-  color: var(--accent);
+  color: var(--osw-text);
   font-weight: 700;
-  font-family: var(--font-mono);
+  font-family: var(--osw-font-mono);
+  font-variant-numeric: tabular-nums;
+  min-width: 6ch;
+  text-align: right;
 }
 
 /* Size popover: slider on the left, one swatch showing the current colour on
@@ -496,7 +528,7 @@
 .colorCol {
   flex: 0 0 auto;
   padding-left: 12px;
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--osw-border);
 }
 /* The flyout centres on the swatch, so it hangs off this wrapper rather than
    the column — the column's divider padding would throw the centre off. */
@@ -509,12 +541,12 @@
   height: 28px;
   min-width: 28px;
   padding: 0;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  box-shadow: 0 0 0 1px var(--ring) inset;
+  border-radius: var(--osw-radius-full);
+  border: 2px solid var(--osw-border);
+  box-shadow: inset 0 0 0 1px var(--osw-coin-ring);
 }
 .swCurrent:hover {
-  border-color: var(--muted);
+  border-color: var(--osw-text-muted);
 }
 .colorFlyout {
   position: absolute;
@@ -522,11 +554,11 @@
   left: 50%;
   transform: translateX(calc(-50% + var(--fly-shift, 0px)));
   display: none;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-lg);
   padding: 8px;
-  box-shadow: var(--shadow-pop);
+  box-shadow: var(--osw-shadow-popover);
   z-index: 70;
 }
 .colorFlyout.open {
@@ -542,15 +574,17 @@
   height: 24px;
   min-width: 24px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: var(--osw-radius-full);
   border: 2px solid transparent;
-  box-shadow: 0 0 0 1px var(--ring) inset;
+  box-shadow: inset 0 0 0 1px var(--osw-coin-ring);
 }
 .swBtn:hover {
-  border-color: var(--muted);
+  border-color: var(--osw-text-muted);
 }
+/* The fill is evidence and the border is chrome — which is why these may be
+   round while nothing else in the chrome is. */
 .swBtn.active {
-  border-color: var(--text);
+  border-color: var(--osw-text);
 }
 
 /* ---------- Cell-size slider ---------- */
@@ -564,31 +598,31 @@
 }
 .railPop input[type='range']::-webkit-slider-runnable-track {
   height: 6px;
-  border-radius: 4px;
-  background: var(--border);
+  border-radius: var(--osw-radius-xxs);
+  background: var(--osw-border);
 }
 .railPop input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;
   height: 18px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 2px solid var(--bg);
+  border-radius: var(--osw-radius-full);
+  background: var(--osw-brand);
+  border: 2px solid var(--osw-bg);
   margin-top: -6px;
-  box-shadow: var(--shadow-thumb);
+  box-shadow: var(--osw-shadow-chip);
 }
 .railPop input[type='range']::-moz-range-track {
   height: 6px;
-  border-radius: 4px;
-  background: var(--border);
+  border-radius: var(--osw-radius-xxs);
+  background: var(--osw-border);
 }
 .railPop input[type='range']::-moz-range-thumb {
   width: 16px;
   height: 16px;
-  border: 2px solid var(--bg);
-  border-radius: 50%;
-  background: var(--accent);
+  border: 2px solid var(--osw-bg);
+  border-radius: var(--osw-radius-full);
+  background: var(--osw-brand);
   cursor: pointer;
 }
 .railPop input[type='range']:focus {
@@ -609,9 +643,9 @@
 .sliderEnd {
   flex: 0 0 auto;
   font-size: 10px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   white-space: nowrap;
-  font-family: var(--font-mono);
+  font-family: var(--osw-font-mono);
 }
 
 /* ---------- Region autocomplete ---------- */
@@ -621,29 +655,29 @@
 }
 .regionInput {
   width: 100%;
-  background: var(--input);
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: var(--osw-surface-low);
+  border: 1px solid var(--osw-border);
+  color: var(--osw-text);
   padding: 9px 11px;
-  border-radius: 8px;
+  border-radius: var(--osw-radius-md);
   font-size: 13px;
   outline: none;
 }
 .regionInput:focus {
-  border-color: var(--accent);
+  border-color: var(--osw-focus);
 }
 .regionInput::placeholder {
-  color: var(--muted);
+  color: var(--osw-text-muted);
 }
 .suggest {
   position: absolute;
   bottom: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: var(--panel2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: var(--shadow-suggest);
+  background: var(--osw-surface-high);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-lg);
+  box-shadow: var(--osw-shadow-menu-up);
   z-index: 50;
   max-height: 236px;
   overflow-y: auto;
@@ -657,27 +691,30 @@
 .suggestDown {
   top: calc(100% + 6px);
   bottom: auto;
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--osw-shadow-menu);
 }
 .suggestItem {
   padding: 8px 10px;
   font-size: 12px;
   cursor: pointer;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--osw-border);
   line-height: 1.3;
 }
 .suggestItem:last-child {
   border-bottom: none;
 }
-.suggestItem:hover,
+.suggestItem:hover {
+  background: var(--osw-hover);
+}
 .suggestItem.active {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--osw-selected);
+  box-shadow: inset 0 0 0 1px var(--osw-selected-edge);
+  color: var(--osw-text-strong);
 }
 .suggestItem .sub {
   display: block;
   font-size: 10.5px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
@@ -685,28 +722,30 @@
 }
 .suggestItem:hover .sub,
 .suggestItem.active .sub {
-  color: #c1c5ff;
+  color: var(--osw-text-muted);
 }
 .suggestNote {
   padding: 8px 10px;
   font-size: 11.5px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
 }
 
 /* ---------- Overlays ---------- */
 .modeBadge {
   position: absolute;
-  top: calc(var(--chrome-top) + var(--chrome-h) + 10px);
+  top: calc(var(--osw-chrome-inset) + var(--osw-chrome-h) + 10px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 600;
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--osw-scrim);
+  color: var(--osw-on-scrim);
+  backdrop-filter: blur(var(--osw-blur));
+  -webkit-backdrop-filter: blur(var(--osw-blur));
   padding: 7px 16px;
-  border-radius: 20px;
+  border-radius: var(--osw-radius-full);
   font-size: 12.5px;
   font-weight: 600;
-  box-shadow: var(--shadow-chip);
+  box-shadow: var(--osw-shadow-chip);
   opacity: 1;
   transition: opacity 0.7s ease;
 }
@@ -717,14 +756,16 @@
 
 .statsBar {
   position: absolute;
-  bottom: calc(26px + var(--safeb));
+  bottom: calc(26px + var(--osw-safe-b));
   right: 46px;
   z-index: 600;
   display: flex;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  box-shadow: var(--shadow-chip);
+  background: var(--osw-glass);
+  backdrop-filter: blur(var(--osw-blur));
+  -webkit-backdrop-filter: blur(var(--osw-blur));
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-xl);
+  box-shadow: var(--osw-shadow-island);
   overflow: hidden;
 }
 .fstat {
@@ -735,56 +776,51 @@
   min-width: 58px;
 }
 .fstat + .fstat {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--osw-border);
 }
 .fstat .n {
   font-size: 16px;
   font-weight: 700;
   line-height: 1;
-  color: var(--text);
-  font-family: var(--font-mono);
+  color: var(--osw-text);
+  font-family: var(--osw-font-mono);
+  font-variant-numeric: tabular-nums;
 }
 .fstat .l {
   font-size: 8.5px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--muted);
+  color: var(--osw-text-muted);
   margin-top: 3px;
 }
-.statDone {
-  color: var(--accent2) !important;
-}
-.statLeft {
-  color: var(--accent) !important;
-}
-
 .gridNote {
   position: absolute;
-  bottom: calc(96px + var(--safeb));
+  bottom: calc(96px + var(--osw-safe-b));
   left: 50%;
   transform: translateX(-50%);
   z-index: 600;
   margin: 0;
-  background: var(--panel);
-  border: 1px solid var(--danger);
-  border-radius: 8px;
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-danger);
+  border-radius: var(--osw-radius-md);
   padding: 6px 12px;
-  box-shadow: var(--shadow-chip);
+  box-shadow: var(--osw-shadow-chip);
   white-space: nowrap;
   font-size: 11px;
-  color: var(--danger);
+  color: var(--osw-danger);
 }
 
 .toast {
   position: absolute;
-  bottom: calc(20px + var(--safeb));
+  bottom: calc(20px + var(--osw-safe-b));
   left: 50%;
   transform: translateX(-50%);
   z-index: 700;
-  background: var(--toast-bg);
-  color: var(--toast-ink);
+  background: var(--osw-scrim);
+  color: var(--osw-on-scrim);
+  box-shadow: var(--osw-shadow-chip);
   padding: 9px 18px;
-  border-radius: 8px;
+  border-radius: var(--osw-radius-md);
   font-size: 13px;
   font-weight: 600;
   opacity: 0;
@@ -797,8 +833,8 @@
 
 .focusExit {
   position: absolute;
-  top: calc(12px + env(safe-area-inset-top, 0px));
-  right: 12px;
+  top: calc(var(--osw-chrome-inset) + env(safe-area-inset-top, 0px));
+  right: var(--osw-chrome-inset);
   z-index: 640;
   width: 40px;
   height: 40px;
@@ -806,19 +842,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9px;
-  background: var(--glass);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-chip);
+  border-radius: var(--osw-radius-xl);
+  background: var(--osw-glass);
+  border: 1px solid var(--osw-border);
+  color: var(--osw-text-muted);
+  backdrop-filter: blur(var(--osw-blur));
+  -webkit-backdrop-filter: blur(var(--osw-blur));
+  box-shadow: var(--osw-shadow-chip);
   opacity: 0.3;
   transition: opacity 0.18s ease;
 }
 .focusExit:hover {
   opacity: 1;
-  color: var(--text);
+  color: var(--osw-text);
 }
 @media (hover: none) {
   .focusExit {
@@ -830,19 +866,19 @@
 .ctxMenu {
   position: absolute;
   z-index: 900;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-lg);
   padding: 5px;
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--osw-shadow-menu);
   min-width: 196px;
 }
 .ctxCoords {
   font-size: 11px;
-  color: var(--muted);
-  font-family: var(--font-mono);
+  color: var(--osw-text-muted);
+  font-family: var(--osw-font-mono);
   padding: 7px 10px 9px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--osw-border);
   margin-bottom: 4px;
 }
 .ctxItem {
@@ -854,13 +890,13 @@
   background: transparent;
   border: 1px solid transparent;
   padding: 9px 10px;
-  border-radius: 7px;
+  border-radius: var(--osw-radius-sm);
   font-size: 12.5px;
-  color: var(--text);
+  color: var(--osw-text);
 }
 .ctxItem:hover {
-  background: var(--panel2);
-  border-color: var(--border);
+  background: var(--osw-hover);
+  border-color: var(--osw-border);
 }
 .ctxItem svg {
   flex: 0 0 auto;
@@ -900,10 +936,10 @@
     width: min(440px, 100%);
   }
   :global(body.searchopen) .dateCtl {
-    top: calc(var(--chrome-top) + var(--chrome-h) * 2 + 18px);
+    top: calc(var(--osw-chrome-inset) + var(--osw-chrome-h) * 2 + 18px);
   }
   :global(body.searchopen) .modeBadge {
-    top: calc(var(--chrome-top) + var(--chrome-h) * 2 + 18px);
+    top: calc(var(--osw-chrome-inset) + var(--osw-chrome-h) * 2 + 18px);
   }
   /* iOS zooms the whole page when a focused field is under 16px */
   .searchBar input,

@@ -51,13 +51,11 @@ const icons = {
 interface Props {
   theme: ThemeChoice
   onTheme: (t: ThemeChoice) => void
-  statsShown: boolean
-  onStats: (b: boolean) => void
   onShortcuts: () => void
   onCredits: () => void
 }
 
-export function AppMenu({ theme, onTheme, statsShown, onStats, onShortcuts, onCredits }: Props) {
+export function AppMenu({ theme, onTheme, onShortcuts, onCredits }: Props) {
   const [open, setOpen] = useState(false)
   const wrap = useRef<HTMLDivElement | null>(null)
 
@@ -109,19 +107,6 @@ export function AppMenu({ theme, onTheme, statsShown, onStats, onShortcuts, onCr
         {themeRow('system', 'System')}
         {themeRow('light', 'Light')}
         {themeRow('dark', 'Dark')}
-
-        <div className={styles.menuSep} />
-        <button
-          className={styles.menuItem}
-          type="button"
-          role="menuitemcheckbox"
-          aria-checked={statsShown}
-          onClick={() => onStats(!statsShown)}
-        >
-          {icons.counts}
-          Show counts
-          {Tick}
-        </button>
 
         <div className={styles.menuSep} />
         <button

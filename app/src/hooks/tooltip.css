@@ -10,15 +10,15 @@
   align-items: center;
   gap: 8px;
   white-space: nowrap;
-  background: var(--tip-bg);
-  border: 1px solid var(--tip-border);
-  color: var(--tip-text);
+  background: var(--osw-surface-low);
+  border: 1px solid var(--osw-border);
+  color: var(--osw-text);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.35;
   padding: 6px 9px;
-  border-radius: 8px;
-  box-shadow: var(--shadow-menu);
+  border-radius: var(--osw-radius-md);
+  box-shadow: var(--osw-shadow-tooltip);
   pointer-events: none;
   opacity: 0;
   transform: translate3d(0, var(--tip-off, 4px), 0) scale(0.97);
@@ -34,12 +34,12 @@
 }
 #gg-tip .tip-key {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--osw-font-mono);
   font-size: 10.5px;
   font-weight: 500;
   line-height: 1;
   padding: 3px 5px;
-  border-radius: 4px;
-  background: var(--tip-key-bg);
-  color: var(--tip-key-text);
+  border-radius: var(--osw-radius-xxs);
+  background: var(--osw-surface-high);
+  color: var(--osw-text-muted);
 }

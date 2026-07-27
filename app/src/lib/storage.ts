@@ -3,7 +3,6 @@ import type { ThemeChoice } from './types'
 
 const VIEW_KEY = 'geogrid.view'
 const THEME_KEY = 'geogrid.theme'
-const STATS_KEY = 'geogrid.stats'
 
 export interface SavedView {
   center: [number, number]
@@ -57,22 +56,6 @@ export function readTheme(): ThemeChoice {
 export function writeTheme(t: ThemeChoice) {
   try {
     localStorage.setItem(THEME_KEY, t)
-  } catch {
-    /* ignore */
-  }
-}
-
-export function readStatsShown(): boolean {
-  try {
-    return localStorage.getItem(STATS_KEY) !== 'off'
-  } catch {
-    return true
-  }
-}
-
-export function writeStatsShown(on: boolean) {
-  try {
-    localStorage.setItem(STATS_KEY, on ? 'on' : 'off')
   } catch {
     /* ignore */
   }

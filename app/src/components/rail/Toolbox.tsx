@@ -31,6 +31,12 @@ const BrushIcon = (
     <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z" />
   </svg>
 )
+const EraserIcon = (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8.5 20.5 3.8 15.8a2 2 0 0 1 0-2.83l8.9-8.9a2 2 0 0 1 2.83 0l4.7 4.7a2 2 0 0 1 0 2.83L12.5 20.5z" />
+    <path d="M8.5 20.5H21" /><path d="m9.4 8.6 6 6" />
+  </svg>
+)
 const TrashIcon = (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="3 6 5 6 21 6" />
@@ -157,18 +163,33 @@ export function Toolbox() {
       </div>
 
       <button
-        className={`${styles.railBtn} ${g.paintArmed ? styles.active : ''}`}
+        className={`${styles.railBtn} ${g.paintMode === 'brush' ? styles.active : ''}`}
         type="button"
         disabled={!hasGrid}
-        data-tip={g.paintArmed ? 'Painting — click to stop' : 'Brush over cells'}
+        data-tip={g.paintMode === 'brush' ? 'Painting — click to stop' : 'Brush over cells'}
         data-tip-key="B"
         aria-label={`Brush over cells${HAS_MOUSE ? ` — or hold ${PAINT_KEY} and drag` : ''}`}
         onClick={() => {
           setPop(null)
-          g.setPaintArmed(!g.paintArmed)
+          g.setPaintMode(g.paintMode === 'brush' ? null : 'brush')
         }}
       >
         {BrushIcon}
+      </button>
+
+      <button
+        className={`${styles.railBtn} ${g.paintMode === 'erase' ? styles.active : ''}`}
+        type="button"
+        disabled={!hasGrid}
+        data-tip={g.paintMode === 'erase' ? 'Erasing — click to stop' : 'Erase cells'}
+        data-tip-key="X"
+        aria-label="Erase cells"
+        onClick={() => {
+          setPop(null)
+          g.setPaintMode(g.paintMode === 'erase' ? null : 'erase')
+        }}
+      >
+        {EraserIcon}
       </button>
 
       <button

@@ -6,6 +6,13 @@ import { DEFAULT_GRID_COLOR } from '../lib/platform'
 import { DEFAULT_BASE } from '../lib/basemaps'
 
 /**
+ * A stroke tool. The brush takes its direction from the first cell of the
+ * stroke, so it both marks and clears; the eraser only ever clears, which is
+ * what makes it worth having as its own tool rather than a modifier.
+ */
+export type PaintMode = 'brush' | 'erase' | null
+
+/**
  * Everything the chrome needs to read or change about the grid. The Leaflet
  * layers themselves are owned by MapCanvas — this holds the state around them,
  * plus imperative handles the map installs so buttons can drive it.
@@ -20,7 +27,7 @@ export interface MapActions {
   generate: (cellKm?: number) => void
   clearAll: () => void
   setDrawMode: (on: boolean) => void
-  setPaintArmed: (on: boolean) => void
+  setPaintMode: (m: PaintMode) => void
   flyTo: (lat: number, lng: number, zoom?: number) => void
   fitBounds: (b: [[number, number], [number, number]]) => void
   setRegion: (geo: RegionFeature['geometry'], label: string) => void
@@ -47,17 +54,17 @@ interface GridState {
 
   drawing: boolean
   setDrawing: (b: boolean) => void
-  paintArmed: boolean
-  setPaintArmed: (b: boolean) => void
+  /**
+   * Which stroke tool is in hand, if any. One value rather than a flag per
+   * tool, because picking one has to put the other down.
+   */
+  paintMode: PaintMode
+  setPaintMode: (m: PaintMode) => void
   focus: boolean
   setFocus: (b: boolean) => void
 
   gridNote: string
   setGridNote: (s: string) => void
-
-  /** Bumped whenever cell marks change, so consumers re-read derived counts. */
-  revision: number
-  bumpRevision: () => void
 
   mapRef: React.MutableRefObject<LMap | null>
   actions: React.MutableRefObject<MapActions | null>
@@ -74,18 +81,15 @@ export function GridProvider({ children }: { children: ReactNode }) {
   const [regionLabel, setRegionLabel] = useState<string | null>(null)
   const [base, setBase] = useState(DEFAULT_BASE)
   const [drawing, setDrawing] = useState(false)
-  const [paintArmed, setPaintArmed] = useState(false)
+  const [paintMode, setPaintMode] = useState<PaintMode>(null)
   const [focus, setFocus] = useState(false)
   const [gridNote, setGridNote] = useState('')
-  const [revision, setRevision] = useState(0)
 
   const mapRef = useRef<LMap | null>(null)
   const actions = useRef<MapActions | null>(null)
 
-  /** The Searched stat tracks the grid colour, so the token moves with it. */
   const setGridColor = (c: string) => {
     setGridColorState(c)
-    document.documentElement.style.setProperty('--accent2', c)
   }
 
   const value = useMemo<GridState>(
@@ -106,19 +110,17 @@ export function GridProvider({ children }: { children: ReactNode }) {
       setBase,
       drawing,
       setDrawing,
-      paintArmed,
-      setPaintArmed,
+      paintMode,
+      setPaintMode,
       focus,
       setFocus,
       gridNote,
       setGridNote,
-      revision,
-      bumpRevision: () => setRevision((r) => r + 1),
       mapRef,
       actions,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cells, pins, gridColor, cellKm, areaBounds, regionLabel, base, drawing, paintArmed, focus, gridNote, revision],
+    [cells, pins, gridColor, cellKm, areaBounds, regionLabel, base, drawing, paintMode, focus, gridNote],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
@@ -130,13 +132,3 @@ export function useGrid() {
   return v
 }
 
-/** Counts derived from the cells, recomputed when marks change. */
-export function useStats() {
-  const { cells, revision } = useGrid()
-  return useMemo(() => {
-    const total = cells.length
-    const done = cells.filter((c) => c.searched).length
-    return { total, done, left: total - done }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cells, revision])
-}

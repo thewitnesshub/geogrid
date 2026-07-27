@@ -1,27 +1,6 @@
 import styles from '../../theme/chrome.module.css'
-import { useGrid, useStats } from '../../state/GridStore'
+import { useGrid } from '../../state/GridStore'
 import type { DatedEntry } from '../../lib/datedSources'
-
-export function StatsBar({ shown }: { shown: boolean }) {
-  const { total, done, left } = useStats()
-  if (!shown || total === 0) return null
-  return (
-    <div className={`${styles.statsBar} app-chrome`}>
-      <div className={styles.fstat}>
-        <span className="n">{total}</span>
-        <span className="l">Cells</span>
-      </div>
-      <div className={styles.fstat}>
-        <span className={`n ${styles.statDone}`}>{done}</span>
-        <span className="l">Searched</span>
-      </div>
-      <div className={styles.fstat}>
-        <span className={`n ${styles.statLeft}`}>{left}</span>
-        <span className="l">Remaining</span>
-      </div>
-    </div>
-  )
-}
 
 export function ModeBadge({ text, fading }: { text: string; fading: boolean }) {
   if (!text) return null

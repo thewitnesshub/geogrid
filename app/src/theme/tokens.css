@@ -1,60 +1,402 @@
-/* GeoGrid design tokens.
-   Dark is the base; [data-theme=light] re-points the same names.
-   Nothing outside these two blocks may hardcode a colour, shadow or radius. */
+/* ══════════════════════════════════════════════════════════════════════════
+   osintworkspaces.com — design tokens
 
-/* Tokens adapted from the PhotoClue design system (claude.ai/design) */
-/* Dark is the base; [data-theme=light] below re-points the same names. Nothing
-   outside these two blocks may hardcode a colour, or one theme will look wrong. */
-:root{
-  color-scheme:dark;
-  --bg:#0e1015; --panel:#16181c; --panel2:#1c1f25; --border:#282c34;
-  --border-strong:#3d4250; --input:#090a0d;
-  --text:#eff0fa; --text-strong:#ffffff; --muted:#9aa0b0;
-  --accent:#525dff; --on-accent:#ffffff; --accent-hover:#6e77ff;
-  --accent2:#2dd4bf; --danger:#ffb4ab;
-  --danger-soft:rgba(248,81,73,.14);
-  --hover:rgba(185,199,223,.07); --hover-strong:rgba(185,199,223,.13);
-  --glass:rgba(8,9,12,.86);
-  /* scrim = a plate for controls that sit on map imagery, so it stays dark in
-     both themes; the imagery underneath does not change with the theme */
-  --scrim:rgba(0,0,0,.55); --scrim-strong:rgba(0,0,0,.75); --on-scrim:#d6d9e3;
-  --ring:rgba(0,0,0,.45);
-  /* Tooltips read as a tier above the panels, so they invert in light mode. */
-  --tip-bg:#22262f; --tip-border:#343a46; --tip-text:#f2f4fb;
-  --tip-key-bg:rgba(255,255,255,.11); --tip-key-text:#c9cee0;
-  /* A toast is the same register as a tooltip — a transient message floating
-     over everything — so it borrows that plate. Defined by reference, not by
-     value, so the light theme's override carries through on its own. It must
-     not read from --accent2: that tracks the grid colour, which would leave
-     "Copied" changing colour with the user's palette pick. */
-  --toast-bg:var(--tip-bg); --toast-ink:var(--tip-text);
-  --shadow-panel:0 12px 34px rgba(0,0,0,.5); --shadow-chip:0 2px 7px rgba(0,0,0,.5);
-  --shadow-menu:0 8px 24px rgba(0,0,0,.4); --shadow-pop:0 18px 40px rgba(0,0,0,.5);
-  --shadow-suggest:0 -8px 28px rgba(0,0,0,.55); --shadow-thumb:0 1px 5px rgba(0,0,0,.55);
-  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  --font-body:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  /* One height for every control in the top bar — the brand pill, the search
-     bar and the two corner buttons all read as one row. */
-  --chrome-h:40px;
-  --chrome-top:12px;
-  /* everything anchored to the bottom edge adds this, so the rail clears an
-     iPhone's home bar instead of sitting under it */
-  --safeb:env(safe-area-inset-bottom,0px);
+   GENERATED FILE. Do not edit: the next build overwrites it.
+   Source of truth: design-system/tokens.json
+   Regenerate:      node design-system/build.mjs
+
+   Dark is the default. Light follows the operating system unless the page
+   sets an explicit data-theme, which always wins.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  color-scheme: dark;
+
+  /* The field. Near-black in dark so imagery of any exposure sits true. */
+  --osw-bg: #0d0f13;
+
+  /* Docked panels — sidebars, rails, docked tool panels. */
+  --osw-surface: #171a20;
+
+  /* RECESSED below the field: inputs, thumbnail wells, tooltips. */
+  --osw-surface-low: #08090d;
+
+  /* RAISED above the panel: menus, popovers, chips. Also exactly where `hover`
+     lands over `surface`, so a hovered control and a raised one agree by
+     construction. */
+  --osw-surface-high: #20242c;
+
+  /* The pressed / topmost step. */
+  --osw-surface-highest: #2e3440;
+
+  /* Every floating island. ALWAYS paired with blur(var(--osw-blur)). */
+  --osw-glass: rgba(9, 11, 15, 0.86);
+
+  /* Glass that holds READING material rather than a row of controls. */
+  --osw-glass-strong: rgba(9, 11, 15, 0.95);
+
+  /* The 1px hairline — the only separator in the system. */
+  --osw-border: #2b303a;
+
+  /* Hover / emphasis hairline. A hairline exists to be seen. */
+  --osw-border-strong: #3a4150;
+
+  /* Body and controls. 17.6:1 dark on bg, 15.9:1 light on bg. */
+  --osw-text: #f4f5f7;
+
+  /* Titles and active labels. */
+  --osw-text-strong: #ffffff;
+
+  /* Secondary / placeholder / meta. Clears AA on every surface: 6.9:1 dark and
+     5.5:1 light on bg, 5.6:1 on surface-high in both. */
+  --osw-text-muted: #959baa;
+
+  /* THE accent. The only SOLID fill meaning 'press this' — one per screen.
+     Identical in both themes because its ink is white in both. NEVER a text
+     colour: 3.99:1 dark / 4.40:1 light, under AA. Use brand-ink when the accent
+     must be read. */
+  --osw-brand: #525dff;
+
+  /* Raw channels of `brand`, for translucent washes. Keep in sync with brand. */
+  --osw-brand-rgb: 82, 93, 255;
+
+  /* Ink printed ON brand. 4.81:1 — clears AA for normal text. */
+  --osw-on-brand: #ffffff;
+
+  /* A solid accent fill DARKENS toward the field under the pointer (6.61:1 under
+     white). Lightening moves the fill away from its own white ink. Same in both
+     themes: the ink is white in both, so the ramp is too. */
+  --osw-brand-hover: #414ad6;
+
+  /* One further step down on :active. 8.24:1 under white. */
+  --osw-brand-press: #373fb6;
+
+  /* The accent WHEN IT MUST BE READ — accent-as-text, and accent hairlines drawn
+     on imagery. NEVER a button fill. This is the one accent token that INVERTS
+     between themes: it steps lighter on the dark field (4.97:1) and darker on the
+     light one (6.29:1), because readability, not lightness, is what the token
+     means. */
+  --osw-brand-ink: #6872ff;
+
+  /* The accent wash: what is currently ON. Deliberately NOT the solid fill — it
+     stays 2.14:1 (dark) / 3.32:1 (light) clear of `brand`, so a selected tool
+     never reads as a dimmed action button. Carries text-strong at 10.3:1 dark /
+     13.5:1 light. Sits 1.52:1 (dark) and 1.32:1 (light) from the hover wash, so
+     the state is legible on its own; selected-edge sharpens it rather than
+     carrying it. */
+  --osw-selected: #313887;
+
+  /* The 1px inset hairline on a selected surface. On an opaque panel it defines
+     the wash's shape against the control's own border. INSIDE GLASS OVER IMAGERY
+     IT IS THE STATE: the wash falls to 1.05:1 against its own bar in light mode
+     over a dark tile, and most selected controls live in a floating bar.
+     Composites to 1.42:1 (dark) / 1.88:1 (light) against the wash it edges. Never
+     omit it. */
+  --osw-selected-edge: rgba(82, 93, 255, 0.45);
+
+  /* The border of an ENGAGED TEXT INPUT and nothing else. Buttons and toggles
+     never ring. 7.14:1 dark / 4.93:1 light on bg. */
+  --osw-focus: #8d94ff;
+
+  /* Supporting structure: count pills, keyboard hints, readouts, section headings.
+     Deliberately the SAME tone as text-muted — keeping them identical is what
+     stops a third grey appearing. */
+  --osw-secondary: #959baa;
+
+  /* Raw channels of `secondary`. Mixes every hover wash, which is what keeps
+     hovers cool rather than grey. */
+  --osw-secondary-rgb: 149, 155, 170;
+
+  /* Ink printed ON a solid secondary fill. */
+  --osw-on-secondary: #0d0f13;
+
+  /* Delete, clear, remove, error copy — carried at rest so the warning precedes
+     the pointer. 11.3:1 dark / 6.0:1 light on bg. */
+  --osw-danger: #ffb4ab;
+
+  /* Raw channels of `danger`, for translucent destructive washes. */
+  --osw-danger-rgb: 255, 180, 171;
+
+  /* Solid destructive fill, white ink. Same in both themes. */
+  --osw-danger-solid: #ba1a1a;
+
+  /* TRANSIENT confirmation only ('Copied', 'Saved') — never a surface, border, or
+     resting state. 12.4:1 dark / 5.0:1 light on bg. */
+  --osw-success: #6ee7a2;
+
+  /* The resting hover wash. Mixed from the structure tone, never white — a grey
+     wash on a cool field is what makes chrome read as flat. */
+  --osw-hover: rgba(149, 155, 170, 0.07);
+
+  /* The pressed / emphasised wash. */
+  --osw-hover-strong: rgba(149, 155, 170, 0.13);
+
+  /* THEME-INVARIANT BY DESIGN. A plate for controls sitting on map or photo
+     imagery: the imagery underneath does not change with the theme, so neither
+     does its scrim. Inherited from GeoGrid, which solved this first — but at
+     GeoGrid's original 0.55 with #d6d9e3 ink it measured 3.38:1 over BRIGHT
+     imagery (snow, an overexposed tile), under AA. A scrim's worst case is never
+     the dark map; it is the white one. */
+  --osw-scrim: rgba(0, 0, 0, 0.6);
+
+  /* Theme-invariant. The heavier plate, for dense readable content over imagery. */
+  --osw-scrim-strong: rgba(0, 0, 0, 0.78);
+
+  /* Theme-invariant ink printed on a scrim. Matches the dark theme's `text` so
+     plated controls read as the same voice as the rest of the chrome, and clears
+     AA against the worst-case bright tile. */
+  --osw-on-scrim: #f4f5f7;
+
+  /* The 1px INSET ring on a swatch or subject coin filled with an identity colour.
+     An evidence colour is chosen for how it reads on imagery, not against chrome,
+     so the pale end of the palette — `id-white`, `id-yellow` — loses its own edge
+     on a light panel and the coin stops being a circle. Inset, so it never grows
+     the coin or reads as a selection ring; selection is still the border. Themed,
+     because unlike the palette it fills, this ring's backdrop IS the panel. */
+  --osw-coin-ring: rgba(0, 0, 0, 0.45);
+
+  /* The default 'this floats over the canvas' shadow. Toolbar pill, board chrome,
+     tool island. */
+  --osw-shadow-island: 0 12px 34px rgba(0, 0, 0, 0.5);
+
+  /* Deeper — popovers stack above the toolbar. */
+  --osw-shadow-popover: 0 18px 40px rgba(0, 0, 0, 0.5);
+
+  /* Dropdown menus. */
+  --osw-shadow-menu: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  /* A menu that opens UPWARD, because its trigger sits low on the screen. The
+     offset flips with it: a downward shadow under a list that grew upward lights
+     it from below and the list reads as floating off the wrong edge. Slightly
+     deeper than `menu` — it is cast against content the list has just covered, not
+     empty canvas below a bar. */
+  --osw-shadow-menu-up: 0 -8px 28px rgba(0, 0, 0, 0.55);
+
+  /* On-canvas tags and coins — a tight shadow to lift them off busy imagery. */
+  --osw-shadow-chip: 0 2px 7px rgba(0, 0, 0, 0.5);
+
+  /* Transient overlays. */
+  --osw-shadow-tooltip: 0 6px 18px rgba(0, 0, 0, 0.45);
+
+  /* Onboarding nudges. */
+  --osw-shadow-hint: 0 10px 28px rgba(0, 0, 0, 0.45);
+
+  /* A TEXT-shadow, not a box-shadow: the legibility halo behind a bare label drawn
+     straight onto imagery — a grid cell number, a measurement on a tile.
+     THEME-INVARIANT, like everything over imagery. Use only where a scrim plate
+     would be too heavy for a one- or two-character label; anything longer gets
+     `scrim` + `on-scrim` instead. The doubled 3px pass is deliberate — one pass
+     leaves the stroke translucent over a bright tile. This is legibility, not the
+     glow The No-Decoration Rule forbids. */
+  --osw-shadow-text-halo: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 3px rgba(0, 0, 0, 0.9);
+
+  /* Everything the interface SAYS — labels, menus, controls, prose. */
+  --osw-font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Anything read as raw DATA — coordinates, timestamps, measurements, keycaps.
+     Never prose. */
+  --osw-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --osw-radius-xxs: 4px;
+  --osw-radius-xs: 6px;
+  --osw-radius-sm: 7px;
+  --osw-radius-md: 8px;
+  --osw-radius-rail: 9px;
+  --osw-radius-lg: 12px;
+  --osw-radius-xl: 14px;
+  --osw-radius-full: 999px;
+  --osw-space-xs: 2px;
+  --osw-space-sm: 4px;
+  --osw-space-md: 6px;
+  --osw-space-base: 8px;
+  --osw-space-lg: 12px;
+  --osw-space-xl: 16px;
+  --osw-space-xxl: 24px;
+
+  /* Unifies tool segments, chips and style slots onto one baseline. */
+  --osw-control-h: 27px;
+
+  /* One height for every control in a top bar, so the row reads as one object. */
+  --osw-chrome-h: 40px;
+
+  /* Inset of floating chrome from the viewport edge. */
+  --osw-chrome-inset: 12px;
+
+  /* Docked vertical mode rail. */
+  --osw-rail-w: 52px;
+
+  /* Docked sidebar. Shared so overlays can avoid covering it. */
+  --osw-sidebar-w: 280px;
+
+  /* The one glass blur. Every glass surface uses this value. */
+  --osw-blur: 12px;
+
+  /* Anything anchored to the bottom edge adds this, so it clears an iPhone's home
+     bar. */
+  --osw-safe-b: env(safe-area-inset-bottom, 0px);
+  --osw-id-red: #ff3b30;
+  --osw-id-orange: #ff9500;
+  --osw-id-yellow: #ffd60a;
+  --osw-id-lime: #a3e635;
+  --osw-id-green: #30d158;
+  --osw-id-cyan: #00e5ff;
+  --osw-id-blue: #0a84ff;
+  --osw-id-purple: #bf5af2;
+  --osw-id-pink: #ff2d95;
+  --osw-id-white: #ffffff;
 }
-:root[data-theme=light]{
-  color-scheme:light;
-  --bg:#f3f4f8; --panel:#ffffff; --panel2:#f1f2f7; --border:#dde0e9;
-  --border-strong:#b7bcc9; --input:#ffffff;
-  --text:#15171f; --text-strong:#0a0c12; --muted:#5d6373;
-  --accent:#525dff; --on-accent:#ffffff; --accent-hover:#3d48e6;
-  --accent2:#0d9488; --danger:#b3261e;
-  --danger-soft:rgba(179,38,30,.10);
-  --hover:rgba(21,23,31,.05); --hover-strong:rgba(21,23,31,.10);
-  --glass:rgba(255,255,255,.88);
-  --ring:rgba(21,23,31,.22);
-  --tip-bg:#1b1e26; --tip-border:#2b303b; --tip-text:#f4f5fa;
-  --tip-key-bg:rgba(255,255,255,.13); --tip-key-text:#ccd2e4;
-  --shadow-panel:0 12px 34px rgba(18,22,40,.16); --shadow-chip:0 2px 7px rgba(18,22,40,.14);
-  --shadow-menu:0 8px 24px rgba(18,22,40,.14); --shadow-pop:0 18px 40px rgba(18,22,40,.18);
-  --shadow-suggest:0 -8px 28px rgba(18,22,40,.16); --shadow-thumb:0 1px 5px rgba(18,22,40,.28);
+
+/* System preference, only when the page has not decided for itself. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --osw-bg: #f3f5f8;
+    --osw-surface: #ffffff;
+    --osw-surface-low: #eef0f5;
+    --osw-surface-high: #f4f5f9;
+    --osw-surface-highest: #e9ebf2;
+    --osw-glass: rgba(255, 255, 255, 0.86);
+    --osw-glass-strong: rgba(255, 255, 255, 0.95);
+    --osw-border: #dde1e9;
+    --osw-border-strong: #b8bec9;
+    --osw-text: #171a21;
+    --osw-text-strong: #0a0c11;
+    --osw-text-muted: #5c6373;
+    --osw-brand-ink: #3f48d1;
+    --osw-selected: #ced4ff;
+    --osw-selected-edge: rgba(82, 93, 255, 0.55);
+    --osw-focus: #5058e8;
+    --osw-secondary: #5c6373;
+    --osw-secondary-rgb: 92, 99, 115;
+    --osw-on-secondary: #ffffff;
+    --osw-danger: #b3261e;
+    --osw-danger-rgb: 179, 38, 30;
+    --osw-success: #0f7a43;
+    --osw-hover: rgba(23, 26, 33, 0.05);
+    --osw-hover-strong: rgba(23, 26, 33, 0.10);
+    --osw-coin-ring: rgba(23, 26, 33, 0.22);
+    --osw-shadow-island: 0 12px 34px rgba(18, 22, 40, 0.16);
+    --osw-shadow-popover: 0 18px 40px rgba(18, 22, 40, 0.18);
+    --osw-shadow-menu: 0 8px 24px rgba(18, 22, 40, 0.14);
+    --osw-shadow-menu-up: 0 -8px 28px rgba(18, 22, 40, 0.16);
+    --osw-shadow-chip: 0 2px 7px rgba(18, 22, 40, 0.14);
+    --osw-shadow-tooltip: 0 6px 18px rgba(18, 22, 40, 0.16);
+    --osw-shadow-hint: 0 10px 28px rgba(18, 22, 40, 0.16);
+  }
 }
+
+/* An explicit choice always wins over the system preference. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --osw-bg: #f3f5f8;
+  --osw-surface: #ffffff;
+  --osw-surface-low: #eef0f5;
+  --osw-surface-high: #f4f5f9;
+  --osw-surface-highest: #e9ebf2;
+  --osw-glass: rgba(255, 255, 255, 0.86);
+  --osw-glass-strong: rgba(255, 255, 255, 0.95);
+  --osw-border: #dde1e9;
+  --osw-border-strong: #b8bec9;
+  --osw-text: #171a21;
+  --osw-text-strong: #0a0c11;
+  --osw-text-muted: #5c6373;
+  --osw-brand-ink: #3f48d1;
+  --osw-selected: #ced4ff;
+  --osw-selected-edge: rgba(82, 93, 255, 0.55);
+  --osw-focus: #5058e8;
+  --osw-secondary: #5c6373;
+  --osw-secondary-rgb: 92, 99, 115;
+  --osw-on-secondary: #ffffff;
+  --osw-danger: #b3261e;
+  --osw-danger-rgb: 179, 38, 30;
+  --osw-success: #0f7a43;
+  --osw-hover: rgba(23, 26, 33, 0.05);
+  --osw-hover-strong: rgba(23, 26, 33, 0.10);
+  --osw-coin-ring: rgba(23, 26, 33, 0.22);
+  --osw-shadow-island: 0 12px 34px rgba(18, 22, 40, 0.16);
+  --osw-shadow-popover: 0 18px 40px rgba(18, 22, 40, 0.18);
+  --osw-shadow-menu: 0 8px 24px rgba(18, 22, 40, 0.14);
+  --osw-shadow-menu-up: 0 -8px 28px rgba(18, 22, 40, 0.16);
+  --osw-shadow-chip: 0 2px 7px rgba(18, 22, 40, 0.14);
+  --osw-shadow-tooltip: 0 6px 18px rgba(18, 22, 40, 0.16);
+  --osw-shadow-hint: 0 10px 28px rgba(18, 22, 40, 0.16);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --osw-bg: #0d0f13;
+  --osw-surface: #171a20;
+  --osw-surface-low: #08090d;
+  --osw-surface-high: #20242c;
+  --osw-surface-highest: #2e3440;
+  --osw-glass: rgba(9, 11, 15, 0.86);
+  --osw-glass-strong: rgba(9, 11, 15, 0.95);
+  --osw-border: #2b303a;
+  --osw-border-strong: #3a4150;
+  --osw-text: #f4f5f7;
+  --osw-text-strong: #ffffff;
+  --osw-text-muted: #959baa;
+  --osw-brand: #525dff;
+  --osw-brand-rgb: 82, 93, 255;
+  --osw-on-brand: #ffffff;
+  --osw-brand-hover: #414ad6;
+  --osw-brand-press: #373fb6;
+  --osw-brand-ink: #6872ff;
+  --osw-selected: #313887;
+  --osw-selected-edge: rgba(82, 93, 255, 0.45);
+  --osw-focus: #8d94ff;
+  --osw-secondary: #959baa;
+  --osw-secondary-rgb: 149, 155, 170;
+  --osw-on-secondary: #0d0f13;
+  --osw-danger: #ffb4ab;
+  --osw-danger-rgb: 255, 180, 171;
+  --osw-danger-solid: #ba1a1a;
+  --osw-success: #6ee7a2;
+  --osw-hover: rgba(149, 155, 170, 0.07);
+  --osw-hover-strong: rgba(149, 155, 170, 0.13);
+  --osw-scrim: rgba(0, 0, 0, 0.6);
+  --osw-scrim-strong: rgba(0, 0, 0, 0.78);
+  --osw-on-scrim: #f4f5f7;
+  --osw-coin-ring: rgba(0, 0, 0, 0.45);
+  --osw-shadow-island: 0 12px 34px rgba(0, 0, 0, 0.5);
+  --osw-shadow-popover: 0 18px 40px rgba(0, 0, 0, 0.5);
+  --osw-shadow-menu: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --osw-shadow-menu-up: 0 -8px 28px rgba(0, 0, 0, 0.55);
+  --osw-shadow-chip: 0 2px 7px rgba(0, 0, 0, 0.5);
+  --osw-shadow-tooltip: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --osw-shadow-hint: 0 10px 28px rgba(0, 0, 0, 0.45);
+  --osw-shadow-text-halo: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 3px rgba(0, 0, 0, 0.9);
+  --osw-font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --osw-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --osw-radius-xxs: 4px;
+  --osw-radius-xs: 6px;
+  --osw-radius-sm: 7px;
+  --osw-radius-md: 8px;
+  --osw-radius-rail: 9px;
+  --osw-radius-lg: 12px;
+  --osw-radius-xl: 14px;
+  --osw-radius-full: 999px;
+  --osw-space-xs: 2px;
+  --osw-space-sm: 4px;
+  --osw-space-md: 6px;
+  --osw-space-base: 8px;
+  --osw-space-lg: 12px;
+  --osw-space-xl: 16px;
+  --osw-space-xxl: 24px;
+  --osw-control-h: 27px;
+  --osw-chrome-h: 40px;
+  --osw-chrome-inset: 12px;
+  --osw-rail-w: 52px;
+  --osw-sidebar-w: 280px;
+  --osw-blur: 12px;
+  --osw-safe-b: env(safe-area-inset-bottom, 0px);
+  --osw-id-red: #ff3b30;
+  --osw-id-orange: #ff9500;
+  --osw-id-yellow: #ffd60a;
+  --osw-id-lime: #a3e635;
+  --osw-id-green: #30d158;
+  --osw-id-cyan: #00e5ff;
+  --osw-id-blue: #0a84ff;
+  --osw-id-purple: #bf5af2;
+  --osw-id-pink: #ff2d95;
+  --osw-id-white: #ffffff;
+}
+

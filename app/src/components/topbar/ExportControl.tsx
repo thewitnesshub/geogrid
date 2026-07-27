@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styles from '../../theme/chrome.module.css'
 import { useGrid } from '../../state/GridStore'
 import { buildKML } from '../../lib/kml'
@@ -20,11 +20,14 @@ export function ExportControl() {
 
   // Pins alone are worth exporting too.
   const any = g.cells.length > 0 || g.pins.length > 0
-  const kml = useMemo(
-    () => (any ? buildKML(g.cells, g.pins, g.gridColor) : ''),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [any, g.cells, g.pins, g.gridColor, g.revision],
-  )
+  /**
+   * Built when asked for, not when the marks change. Holding it in a memo
+   * meant every single cell you marked rebuilt the whole document — most of a
+   * megabyte of string for a 3000-cell grid — and nothing read it until you
+   * opened this menu. On a phone that is the pause between tapping a cell and
+   * being able to move the map again.
+   */
+  const kml = () => (any ? buildKML(g.cells, g.pins, g.gridColor) : '')
 
   useEffect(() => {
     if (!open) return
@@ -36,7 +39,7 @@ export function ExportControl() {
   }, [open])
 
   const download = () => {
-    const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' })
+    const blob = new Blob([kml()], { type: 'application/vnd.google-earth.kml+xml' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = 'geogrid.kml'
@@ -48,7 +51,7 @@ export function ExportControl() {
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(kml)
+      await navigator.clipboard.writeText(kml())
       toast('KML copied to clipboard')
       setOpen(false)
     } catch {

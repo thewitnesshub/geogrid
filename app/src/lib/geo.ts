@@ -10,6 +10,19 @@ export function parseCoords(v: string): [number, number] | null {
   return [lat, lng]
 }
 
+/**
+ * Split a Nominatim `display_name` into the place and where it is.
+ *
+ * "Crimean Peninsula, Ukraine" → label "Crimean Peninsula", sub "Ukraine". Both
+ * suggestion lists render the two on their own lines, so the sub must be the
+ * *rest* of the name — handing it the whole string prints the place twice.
+ * A name with no comma has nothing left to say, and gets an empty sub.
+ */
+export function splitName(displayName: string): { label: string; sub: string } {
+  const [first, ...rest] = (displayName ?? '').split(',')
+  return { label: first.trim(), sub: rest.join(',').trim() }
+}
+
 export const fmtLatLng = (ll: LatLng | { lat: number; lng: number }) =>
   `${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}`
 

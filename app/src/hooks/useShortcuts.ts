@@ -6,6 +6,7 @@ export interface ShortcutHandlers {
   region: () => void
   size: () => void
   brush: () => void
+  eraser: () => void
   basemap: () => void
   exportKml: () => void
   focus: () => void
@@ -25,6 +26,7 @@ const KEYS: { key: string; run: keyof ShortcutHandlers }[] = [
   { key: 'r', run: 'region' },
   { key: 'c', run: 'size' },
   { key: 'b', run: 'brush' },
+  { key: 'x', run: 'eraser' },
   { key: 'm', run: 'basemap' },
   { key: 'e', run: 'exportKml' },
   { key: 'f', run: 'focus' },
@@ -64,6 +66,7 @@ export function SHORTCUT_DOC() {
         { label: 'Fill a region', caps: ['R'] },
         { label: 'Cell size & colour', caps: ['C'] },
         { label: 'Brush over cells', caps: ['B'] },
+        { label: 'Erase cells', caps: ['X'] },
         ...(HAS_MOUSE
           ? [{ label: 'Brush without leaving the current tool', caps: [PAINT_KEY, 'drag'] }]
           : []),

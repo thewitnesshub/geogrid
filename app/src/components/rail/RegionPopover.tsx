@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import styles from '../../theme/chrome.module.css'
 import { useGrid } from '../../state/GridStore'
 import { useToast } from '../../hooks/useToast'
+import { splitName } from '../../lib/geo'
 import type { Polygon, MultiPolygon } from 'geojson'
 
 interface Hit {
@@ -51,7 +52,7 @@ export function RegionPopover({ open, onDone }: { open: boolean; onDone: () => v
       .then((list: any[]) => {
         const hits: Hit[] = (list ?? [])
           .filter((d) => d.geojson && (d.geojson.type === 'Polygon' || d.geojson.type === 'MultiPolygon'))
-          .map((d) => ({ label: d.display_name.split(',')[0], sub: d.display_name, geo: d.geojson }))
+          .map((d) => ({ ...splitName(d.display_name), geo: d.geojson }))
         setItems(hits)
         setNote(hits.length ? '' : 'No area boundary found — try a city, district or region.')
       })
@@ -112,7 +113,7 @@ export function RegionPopover({ open, onDone }: { open: boolean; onDone: () => v
               onClick={() => pick(h)}
             >
               {h.label}
-              <span className="sub">{h.sub}</span>
+              {h.sub && <span className={styles.sub}>{h.sub}</span>}
             </div>
           ))}
           {note && <div className={styles.suggestNote}>{note}</div>}
