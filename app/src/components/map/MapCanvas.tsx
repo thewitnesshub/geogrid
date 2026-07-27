@@ -44,7 +44,6 @@ export function MapCanvas({
     dated: null as TileLayer | null,
     grid: L.layerGroup(),
     pinLayer: L.layerGroup(),
-    areaRect: null as Rectangle | null,
     regionLayer: null as L.GeoJSON | null,
   })
   const cellsRef = useRef<Cell[]>([])
@@ -63,7 +62,6 @@ export function MapCanvas({
   useEffect(() => {
     gridColorRef.current = g.gridColor
     cellsRef.current.forEach(paintCell)
-    layers.current.areaRect?.setStyle({ color: g.gridColor })
     layers.current.regionLayer?.setStyle({ color: g.gridColor })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [g.gridColor])
@@ -178,8 +176,6 @@ export function MapCanvas({
   const commitArea = (b: LatLngBounds, geo: RegionFeature | null) => {
     const map = g.mapRef.current
     if (!map) return
-    if (layers.current.areaRect) map.removeLayer(layers.current.areaRect)
-    layers.current.areaRect = null
     if (!geo && layers.current.regionLayer) {
       map.removeLayer(layers.current.regionLayer)
       layers.current.regionLayer = null
@@ -187,14 +183,9 @@ export function MapCanvas({
       g.setRegionLabel(null)
     }
     region.current = geo
-    if (!geo) {
-      layers.current.areaRect = L.rectangle(b, {
-        color: gridColorRef.current,
-        weight: 2,
-        fill: false,
-        dashArray: '6,5',
-      }).addTo(map)
-    }
+    // No outline for a drawn box: the grid is the area now. A square-celled
+    // lattice can never land exactly on a hand-drawn rectangle, so an outline
+    // only ever advertises the gap between the two.
     g.setAreaBounds(b)
     g.setDrawing(false)
     generate(b, geo)
@@ -421,8 +412,6 @@ export function MapCanvas({
         const map = g.mapRef.current
         layers.current.grid.clearLayers()
         cellsRef.current = []
-        if (map && layers.current.areaRect) map.removeLayer(layers.current.areaRect)
-        layers.current.areaRect = null
         if (map && layers.current.regionLayer) map.removeLayer(layers.current.regionLayer)
         layers.current.regionLayer = null
         region.current = null

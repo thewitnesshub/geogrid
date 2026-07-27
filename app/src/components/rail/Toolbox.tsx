@@ -3,7 +3,7 @@ import styles from '../../theme/chrome.module.css'
 import { useGrid } from '../../state/GridStore'
 import { ColorFlyout } from './ColorFlyout'
 import { RegionPopover } from './RegionPopover'
-import { fmtSize, kmToSlider, minSliderPos, sliderToKm } from '../../lib/gridMath'
+import { fmtSize, kmToSlider, maxSliderPos, minSliderPos, sliderToKm } from '../../lib/gridMath'
 import { HAS_MOUSE, PAINT_KEY } from '../../lib/platform'
 
 type Pop = null | 'region' | 'size'
@@ -55,8 +55,11 @@ export function Toolbox() {
   const [pop, setPop] = useState<Pop>(null)
   const box = useRef<HTMLDivElement | null>(null)
   const hasGrid = g.cells.length > 0
-  // The track covers only what this area can hold, so the thumb never springs back.
+  // The track covers only what this area can hold, so the thumb never springs
+  // back: below the floor the grid breaks the cell cap, above the ceiling a
+  // single cell no longer fits inside the area.
   const minPos = g.areaBounds ? minSliderPos(g.areaBounds) : 0
+  const maxPos = g.areaBounds ? maxSliderPos(g.areaBounds) : 100
   const regenT = useRef<{ t: number | undefined; last: number }>({ t: undefined, last: 0 })
 
   useEffect(() => {
@@ -71,6 +74,16 @@ export function Toolbox() {
   useEffect(() => {
     if (!hasGrid && pop === 'size') setPop(null)
   }, [hasGrid, pop])
+
+  // A new grid opens its settings: the size is the first thing anyone wants to
+  // change once they can see the cells, and the slider is otherwise two clicks
+  // away behind a gear. Only on the transition, so closing it makes it stay
+  // closed while you work.
+  const had = useRef(false)
+  useEffect(() => {
+    if (hasGrid && !had.current) setPop('size')
+    had.current = hasGrid
+  }, [hasGrid])
 
   /** leading + trailing throttle (~70ms) so dragging the slider stays smooth */
   const liveRegen = (km: number) => {
@@ -142,9 +155,9 @@ export function Toolbox() {
                 <input
                   type="range"
                   min={minPos}
-                  max={100}
+                  max={maxPos}
                   step={0.5}
-                  value={Math.max(minPos, kmToSlider(g.cellKm))}
+                  value={Math.min(maxPos, Math.max(minPos, kmToSlider(g.cellKm)))}
                   aria-label="Cell size"
                   onChange={(e) => {
                     const km = sliderToKm(parseFloat(e.target.value))
@@ -152,7 +165,7 @@ export function Toolbox() {
                     liveRegen(km)
                   }}
                 />
-                <span className={styles.sliderEnd}>10 km</span>
+                <span className={styles.sliderEnd}>{fmtSize(sliderToKm(maxPos))}</span>
               </div>
             </div>
             <div className={styles.colorCol}>

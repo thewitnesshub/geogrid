@@ -20,6 +20,27 @@ export const kmToSlider = (km: number) =>
 export const minSliderPos = (bounds: LatLngBounds) =>
   Math.min(100, Math.ceil(kmToSlider(clampCellToCap(bounds)) * 2) / 2)
 
+/**
+ * The largest cell an area can hold and still fit one across. Past it the
+ * lattice cannot stay inside the area at all — a single cell wider than the box
+ * you drew has nowhere to go but out of it — so the track stops here.
+ */
+export function maxCellToFit(bounds: LatLngBounds): number {
+  const sw = bounds.getSouthWest()
+  const ne = bounds.getNorthEast()
+  const midLat = (sw.lat + ne.lat) / 2
+  const w = projX(ne.lng) - projX(sw.lng)
+  const h = projY(ne.lat) - projY(sw.lat)
+  return (Math.min(w, h) * Math.max(0.01, Math.cos((midLat * Math.PI) / 180))) / 1000
+}
+
+/** Rounded down to a step, and never below the floor, so the track cannot invert. */
+export const maxSliderPos = (bounds: LatLngBounds) =>
+  Math.max(
+    minSliderPos(bounds),
+    Math.min(100, Math.floor(kmToSlider(maxCellToFit(bounds)) * 2) / 2),
+  )
+
 export const fmtSize = (km: number) =>
   km < 1 ? `${Math.round((km * 1000) / 10) * 10} m` : `${km < 10 ? km.toFixed(1) : Math.round(km)} km`
 
@@ -60,7 +81,19 @@ export interface Dims {
   total: number
 }
 
-export function computeDims(bounds: LatLngBounds, cellKm: number): Dims {
+/**
+ * How the lattice handles an area that is not a whole number of cells across.
+ *
+ * A square cell cannot tile an arbitrary rectangle exactly, so something has
+ * to give at the edge. `inside` keeps every cell within the area, which is what
+ * a hand-drawn box wants: the box is the promise, and a grid spilling past it
+ * says the tool ignored what you drew. `cover` runs past the edge instead,
+ * which is right for a region, where the bounds are only the outline's bounding
+ * box and the mask drops whatever falls outside the shape anyway.
+ */
+export type Fit = 'inside' | 'cover'
+
+export function computeDims(bounds: LatLngBounds, cellKm: number, fit: Fit = 'cover'): Dims {
   const sw = bounds.getSouthWest()
   const ne = bounds.getNorthEast()
   const m = Math.max(10, cellKm * 1000)
@@ -68,11 +101,24 @@ export function computeDims(bounds: LatLngBounds, cellKm: number): Dims {
   // Ground metres shrink relative to mercator metres by cos(lat); size the
   // step so the cell measures cellKm on the ground at the area's middle.
   const step = m / Math.max(0.01, Math.cos((midLat * Math.PI) / 180))
-  const x0 = projX(sw.lng)
-  const yTop = projY(ne.lat)
-  const cols = Math.max(1, Math.ceil((projX(ne.lng) - x0) / step))
-  const rows = Math.max(1, Math.ceil((yTop - projY(sw.lat)) / step))
-  return { x0, yTop, step, cols, rows, total: cols * rows }
+  const west = projX(sw.lng)
+  const north = projY(ne.lat)
+  const w = projX(ne.lng) - west
+  const h = north - projY(sw.lat)
+  const fitCount = (span: number) =>
+    Math.max(1, fit === 'inside' ? Math.floor(span / step) : Math.ceil(span / step))
+  const cols = fitCount(w)
+  const rows = fitCount(h)
+  // Centre the lattice. Whatever does not divide evenly is then shared between
+  // opposite edges rather than all of it hanging off the east and the south.
+  return {
+    x0: west + (w - cols * step) / 2,
+    yTop: north - (h - rows * step) / 2,
+    step,
+    cols,
+    rows,
+    total: cols * rows,
+  }
 }
 
 /**
@@ -203,11 +249,17 @@ export function buildCellBounds(
   cellKm: number,
   region: RegionFeature | null,
 ): { cells: LatLngBounds[]; cellKm: number } {
-  let km = cellKm
-  let d = computeDims(bounds, km)
+  // A drawn box is a promise to stay inside it. A region's bounds are only its
+  // bounding box, and the mask trims the overhang, so there it may run past.
+  const fit: Fit = region ? 'cover' : 'inside'
+  // Too big to fit even once and staying inside becomes impossible, so the
+  // size comes down to the one that does. The slider's own ceiling matches
+  // this, so it is a backstop rather than something a drag can hit.
+  let km = fit === 'inside' ? Math.min(cellKm, maxCellToFit(bounds)) : cellKm
+  let d = computeDims(bounds, km, fit)
   if (d.total > CELL_CAP) {
     km = clampCellToCap(bounds)
-    d = computeDims(bounds, km)
+    d = computeDims(bounds, km, fit)
   }
 
   const mask = region ? regionMask(region, d) : null

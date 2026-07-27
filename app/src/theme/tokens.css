@@ -146,6 +146,23 @@
      AA against the worst-case bright tile. */
   --osw-on-scrim: #f4f5f7;
 
+  /* THEME-INVARIANT. The predicted shadow Sun Calculator draws on map imagery —
+     dark, like the real shadow it stands in for. It renders ON tiles, so it never
+     follows the theme (The Imagery-Is-Not-Themed Rule). Always drawn over
+     cast-shadow-halo, which is what keeps it legible on a dark tile. */
+  --osw-cast-shadow: rgba(8, 11, 18, 0.65);
+
+  /* Theme-invariant. The thin light casing drawn UNDER cast-shadow: a dark stroke
+     alone vanishes on a dark tile, which is exactly where shadow analysis tends to
+     look. The same legibility job as shadow.text-halo, done with a line. */
+  --osw-cast-shadow-halo: rgba(255, 255, 255, 0.8);
+
+  /* Theme-invariant sibling of coin-ring: the edge on a subject coin drawn ON
+     IMAGERY rather than on a panel. Its backdrop is the tile, not the theme, so
+     unlike coin-ring it never inverts — and it is light, because a dark ring dies
+     on the dark imagery where markers actually sit. */
+  --osw-coin-ring-imagery: rgba(255, 255, 255, 0.9);
+
   /* The 1px INSET ring on a swatch or subject coin filled with an identity colour.
      An evidence colour is chosen for how it reads on imagery, not against chrome,
      so the pale end of the palette — `id-white`, `id-yellow` — loses its own edge
@@ -355,6 +372,9 @@
   --osw-scrim: rgba(0, 0, 0, 0.6);
   --osw-scrim-strong: rgba(0, 0, 0, 0.78);
   --osw-on-scrim: #f4f5f7;
+  --osw-cast-shadow: rgba(8, 11, 18, 0.65);
+  --osw-cast-shadow-halo: rgba(255, 255, 255, 0.8);
+  --osw-coin-ring-imagery: rgba(255, 255, 255, 0.9);
   --osw-coin-ring: rgba(0, 0, 0, 0.45);
   --osw-shadow-island: 0 12px 34px rgba(0, 0, 0, 0.5);
   --osw-shadow-popover: 0 18px 40px rgba(0, 0, 0, 0.5);
