@@ -11,7 +11,13 @@ import { DEFAULT_BASE } from '../lib/basemaps'
  * plus imperative handles the map installs so buttons can drive it.
  */
 export interface MapActions {
-  generate: () => void
+  /**
+   * Pass the cell size when regenerating because it just changed. The map
+   * mirrors `cellKm` into a ref through an effect, so a caller that sets the
+   * state and regenerates in the same tick would otherwise draw the previous
+   * size — and at the end of a slider drag nothing follows to correct it.
+   */
+  generate: (cellKm?: number) => void
   clearAll: () => void
   setDrawMode: (on: boolean) => void
   setPaintArmed: (on: boolean) => void

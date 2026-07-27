@@ -3,7 +3,7 @@ import styles from '../../theme/chrome.module.css'
 import { useGrid } from '../../state/GridStore'
 import { ColorFlyout } from './ColorFlyout'
 import { RegionPopover } from './RegionPopover'
-import { fmtSize, kmToSlider, sliderToKm } from '../../lib/gridMath'
+import { fmtSize, kmToSlider, minSliderPos, sliderToKm } from '../../lib/gridMath'
 import { HAS_MOUSE, PAINT_KEY } from '../../lib/platform'
 
 type Pop = null | 'region' | 'size'
@@ -49,6 +49,8 @@ export function Toolbox() {
   const [pop, setPop] = useState<Pop>(null)
   const box = useRef<HTMLDivElement | null>(null)
   const hasGrid = g.cells.length > 0
+  // The track covers only what this area can hold, so the thumb never springs back.
+  const minPos = g.areaBounds ? minSliderPos(g.areaBounds) : 0
   const regenT = useRef<{ t: number | undefined; last: number }>({ t: undefined, last: 0 })
 
   useEffect(() => {
@@ -65,16 +67,16 @@ export function Toolbox() {
   }, [hasGrid, pop])
 
   /** leading + trailing throttle (~70ms) so dragging the slider stays smooth */
-  const liveRegen = () => {
+  const liveRegen = (km: number) => {
     window.clearTimeout(regenT.current.t)
     const now = Date.now()
     if (now - regenT.current.last > 70) {
       regenT.current.last = now
-      g.actions.current?.generate()
+      g.actions.current?.generate(km)
     } else {
       regenT.current.t = window.setTimeout(() => {
         regenT.current.last = Date.now()
-        g.actions.current?.generate()
+        g.actions.current?.generate(km)
       }, 90)
     }
   }
@@ -130,17 +132,18 @@ export function Toolbox() {
                 <span className={styles.cellSizeVal}>{fmtSize(g.cellKm)}</span>
               </div>
               <div className={styles.sliderRow}>
-                <span className={styles.sliderEnd}>100 m</span>
+                <span className={styles.sliderEnd}>{fmtSize(sliderToKm(minPos))}</span>
                 <input
                   type="range"
-                  min={0}
+                  min={minPos}
                   max={100}
                   step={0.5}
-                  value={kmToSlider(g.cellKm)}
+                  value={Math.max(minPos, kmToSlider(g.cellKm))}
                   aria-label="Cell size"
                   onChange={(e) => {
-                    g.setCellKm(sliderToKm(parseFloat(e.target.value)))
-                    liveRegen()
+                    const km = sliderToKm(parseFloat(e.target.value))
+                    g.setCellKm(km)
+                    liveRegen(km)
                   }}
                 />
                 <span className={styles.sliderEnd}>10 km</span>

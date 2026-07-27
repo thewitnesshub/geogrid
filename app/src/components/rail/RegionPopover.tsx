@@ -40,8 +40,11 @@ export function RegionPopover({ open, onDone }: { open: boolean; onDone: () => v
     abort.current?.abort()
     abort.current = new AbortController()
     setNote('Searching…')
+    // Ask for the outline pre-simplified. Full detail on a big region runs to
+    // megabytes, and none of it survives being cut into cells: the tolerance is
+    // ~22 m, well inside the 100 m smallest cell.
     fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&limit=8&q=${encodeURIComponent(text)}`,
+      `https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&polygon_threshold=0.0002&limit=8&q=${encodeURIComponent(text)}`,
       { signal: abort.current.signal },
     )
       .then((r) => r.json())

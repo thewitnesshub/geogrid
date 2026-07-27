@@ -114,8 +114,7 @@ export function CreditsModal({ onClose }: { onClose: () => void }) {
       <section>
         <h3>Software</h3>
         <p>
-          <A href="https://leafletjs.com">Leaflet</A> (BSD-2-Clause) and{' '}
-          <A href="https://turfjs.org">Turf.js</A> (MIT).
+          <A href="https://leafletjs.com">Leaflet</A> (BSD-2-Clause).
         </p>
       </section>
     </Shell>

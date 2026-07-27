@@ -400,7 +400,10 @@ export function MapCanvas({
   // ---------- imperative handles for the chrome ----------
   useEffect(() => {
     g.actions.current = {
-      generate: () => generate(g.areaBounds, region.current),
+      generate: (km) => {
+        if (km !== undefined) cellKmRef.current = km
+        generate(g.areaBounds, region.current)
+      },
       clearAll: () => {
         const map = g.mapRef.current
         layers.current.grid.clearLayers()
