@@ -150,15 +150,27 @@
      AA against the worst-case bright tile. */
   --osw-on-scrim: #f4f5f7;
 
-  /* THEME-INVARIANT. The predicted shadow Sun Calculator draws on map imagery —
-     dark, like the real shadow it stands in for. It renders ON tiles, so it never
-     follows the theme (The Imagery-Is-Not-Themed Rule). Always drawn over
-     cast-shadow-halo, which is what keeps it legible on a dark tile. */
-  --osw-cast-shadow: rgba(8, 11, 18, 0.65);
+  /* THEME-INVARIANT. The predicted shadow a tool draws on map imagery. Carries the
+     accent hue — the same indigo as `brand`, deliberately: this is the one mark
+     the whole tool exists to produce, and a near-black line pretending to be a
+     real shadow competes with the real shadows in the tile instead of reading as
+     the product's own answer. That is only safe because it lives ON IMAGERY and
+     never in chrome beyond the legend exemption (see The One-Accent Rule's
+     carve-out). Never follows the theme (The Imagery-Is-Not-Themed Rule). Legible
+     by the weight-and-saturation strategy under 'On-imagery instruments' — the
+     mid-grey-tile numbers in check-contrast record what that trade costs, and
+     cast-shadow-halo remains the remedy if it ever costs too much. Carries a
+     SLIGHT translucency, and only slight: enough that the ground it crosses still
+     shows through, which is what keeps it reading as a shadow lying on the imagery
+     rather than a line ruled over it, while staying far from the alpha at which
+     the mark itself starts to go. */
+  --osw-cast-shadow: rgba(82, 93, 255, 0.88);
 
   /* Theme-invariant. The thin light casing drawn UNDER cast-shadow: a dark stroke
      alone vanishes on a dark tile, which is exactly where shadow analysis tends to
-     look. The same legibility job as shadow.text-halo, done with a line. */
+     look. The same legibility job as shadow.text-halo, done with a line. The
+     robust choice, and the default — a mark that trades it for a gradient is
+     spending legibility, not solving it. */
   --osw-cast-shadow-halo: rgba(255, 255, 255, 0.8);
 
   /* THEME-INVARIANT. The sun itself, drawn on map imagery — where it is in the
@@ -166,8 +178,18 @@
      second accent hue and never appears in chrome (no sun-coloured buttons,
      borders or labels). It sits outside the identity palette on purpose: those ten
      colours encode which SUBJECT something is, and the sun is not a subject — it
-     is a computed fact, like cast-shadow. Always drawn over sun-edge. */
+     is a computed fact, like cast-shadow. Takes a sun-edge casing, or the sun-core
+     gradient where recognition rather than measurement is what an unedged mark
+     would cost. */
   --osw-sun: #ffc933;
+
+  /* THEME-INVARIANT. The colour form of shadow.text-halo, for SVG text — where a
+     text-shadow does not apply at all: `paint-order: stroke fill` with this as the
+     stroke. Same value as the halo it mirrors, so an HTML label and an SVG one
+     drawn on the same imagery read identically. A bare glyph over imagery takes
+     on-scrim ink over THIS, never a stroke borrowed from whatever dark token
+     happens to be nearby. */
+  --osw-halo-ink: rgba(0, 0, 0, 0.9);
 
   /* THEME-INVARIANT. The hot centre of the sun disc — the inner stop of a radial
      gradient that lands on `sun` at the rim. A flat gold disc reads as a sticker;
@@ -175,11 +197,31 @@
      one thing this mark has to say. */
   --osw-sun-core: #fff4cc;
 
-  /* Theme-invariant. The dark rim and casing under everything drawn in `sun`: the
-     disc's edge, the ray's casing, the horizon ring's backing. Gold on a bright
-     overexposed tile is nearly invisible without it — the mirror of
-     cast-shadow-halo, which lightens a dark line for the same reason. */
+  /* Theme-invariant. The dark casing under marks drawn in `sun` — a disc's rim, a
+     ray's casing, the horizon ring's backing. Gold on a bright overexposed tile is
+     nearly invisible without it: the mirror of cast-shadow-halo, which lightens a
+     dark line for the same reason. Not for text on imagery — that pair is on-scrim
+     over halo-ink. */
   --osw-sun-edge: rgba(8, 11, 18, 0.7);
+
+  /* Theme-invariant. The plate of a DRAG HANDLE drawn on imagery — a resize grip
+     on an annotation, the rotate grip. Its backdrop is the photo, not the theme,
+     so it never inverts. Deliberately the inverse of the scrim pair (dark plate,
+     light ink): a handle has to be found against a tile of any exposure, and a
+     light plate with a dark edge is the pairing that survives both a night still
+     and blown-out snow. Not for anything that carries text. */
+  --osw-handle-plate: #ffffff;
+
+  /* Theme-invariant. The hairline around handle-plate. It is what keeps a white
+     grip from dissolving into an overexposed tile — 5.74:1 against the plate once
+     composited over white, so the grip keeps its outline on snow. */
+  --osw-handle-edge: rgba(0, 0, 0, 0.6);
+
+  /* Theme-invariant. A glyph drawn INSIDE handle-plate — the turn arrows on the
+     rotate grip. Slightly lighter than a pure black so the glyph reads as
+     marked-on rather than punched-through, and stronger than handle-edge so the
+     symbol leads the outline. */
+  --osw-handle-ink: rgba(0, 0, 0, 0.75);
 
   /* Theme-invariant sibling of coin-ring: the edge on a subject coin drawn ON
      IMAGERY rather than on a panel. Its backdrop is the tile, not the theme, so
@@ -212,8 +254,17 @@
      empty canvas below a bar. */
   --osw-shadow-menu-up: 0 -8px 28px rgba(0, 0, 0, 0.55);
 
-  /* On-canvas tags and coins — a tight shadow to lift them off busy imagery. */
+  /* On-canvas tags and coins — a tight shadow to lift them off busy imagery.
+     THEMED, so it is never the only thing separating a mark from what is under it:
+     over imagery it thins to almost nothing in light mode. A mark drawn on tiles
+     takes chip-imagery instead. */
   --osw-shadow-chip: 0 2px 7px rgba(0, 0, 0, 0.5);
+
+  /* Theme-invariant twin of `chip`, for a coin or mark drawn ON IMAGERY. The
+     backdrop is a tile, not the theme, so the lift cannot follow the theme either
+     (The Imagery-Is-Not-Themed Rule) — and where the mark is a thin ring rather
+     than a filled disc, this shadow IS its edge. */
+  --osw-shadow-chip-imagery: 0 2px 7px rgba(0, 0, 0, 0.55);
 
   /* Transient overlays. */
   --osw-shadow-tooltip: 0 6px 18px rgba(0, 0, 0, 0.45);
@@ -401,11 +452,15 @@
   --osw-scrim: rgba(0, 0, 0, 0.6);
   --osw-scrim-strong: rgba(0, 0, 0, 0.78);
   --osw-on-scrim: #f4f5f7;
-  --osw-cast-shadow: rgba(8, 11, 18, 0.65);
+  --osw-cast-shadow: rgba(82, 93, 255, 0.88);
   --osw-cast-shadow-halo: rgba(255, 255, 255, 0.8);
   --osw-sun: #ffc933;
+  --osw-halo-ink: rgba(0, 0, 0, 0.9);
   --osw-sun-core: #fff4cc;
   --osw-sun-edge: rgba(8, 11, 18, 0.7);
+  --osw-handle-plate: #ffffff;
+  --osw-handle-edge: rgba(0, 0, 0, 0.6);
+  --osw-handle-ink: rgba(0, 0, 0, 0.75);
   --osw-coin-ring-imagery: rgba(255, 255, 255, 0.9);
   --osw-coin-ring: rgba(0, 0, 0, 0.45);
   --osw-shadow-island: 0 12px 34px rgba(0, 0, 0, 0.5);
@@ -413,6 +468,7 @@
   --osw-shadow-menu: 0 8px 24px rgba(0, 0, 0, 0.4);
   --osw-shadow-menu-up: 0 -8px 28px rgba(0, 0, 0, 0.55);
   --osw-shadow-chip: 0 2px 7px rgba(0, 0, 0, 0.5);
+  --osw-shadow-chip-imagery: 0 2px 7px rgba(0, 0, 0, 0.55);
   --osw-shadow-tooltip: 0 6px 18px rgba(0, 0, 0, 0.45);
   --osw-shadow-hint: 0 10px 28px rgba(0, 0, 0, 0.45);
   --osw-shadow-text-halo: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 3px rgba(0, 0, 0, 0.9);

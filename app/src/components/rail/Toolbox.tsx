@@ -8,15 +8,27 @@ import { HAS_MOUSE, PAINT_KEY } from '../../lib/platform'
 
 type Pop = null | 'region' | 'size' | 'clear'
 
+/* Lucide's grid-2x2-plus, which is the family the rest of this rail already
+   draws from. The button makes a grid rather than toggling one, and a plain
+   grid glyph only said "grid" — the plus says you are about to add one. */
 const GridIcon = (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-    <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+    <path d="M12 3v17a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1H3" />
+    <path d="M16 19h6" />
+    <path d="M19 22v-6" />
   </svg>
 )
+/* Not a Lucide icon — grid-2x2-plus with the plus swapped for a magnifier, so
+   the two tools that make a grid read as a pair: one draws the area, one looks
+   it up. The frame is grid-2x2-plus's own path, unchanged, so the only thing
+   that differs between the two buttons is the mark in the empty quadrant. A
+   bare magnifier here said "search" and nothing about a grid, which is also
+   what the place search in the top bar says. */
 const SearchIcon = (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    <path d="M12 3v17a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1H3" />
+    <circle cx="17.5" cy="17.5" r="2.5" />
+    <path d="m19.5 19.5 2.5 2.5" />
   </svg>
 )
 const GearIcon = (
@@ -41,6 +53,12 @@ const EraserSmall = (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M8.5 20.5 3.8 15.8a2 2 0 0 1 0-2.83l8.9-8.9a2 2 0 0 1 2.83 0l4.7 4.7a2 2 0 0 1 0 2.83L12.5 20.5z" />
     <path d="M8.5 20.5H21" />
+  </svg>
+)
+const PinSmall = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z" />
+    <circle cx="12" cy="10" r="2.5" />
   </svg>
 )
 const TrashSmall = (
@@ -245,7 +263,7 @@ export function Toolbox() {
         <button
           className={`${styles.railBtn} ${styles.clearBtn} ${pop === 'clear' ? styles.active : ''}`}
           type="button"
-          disabled={!hasGrid && !g.areaBounds}
+          disabled={!hasGrid && !g.areaBounds && !g.pins.length}
           data-tip="Clear grid"
           aria-label="Clear grid"
           aria-haspopup="true"
@@ -276,6 +294,20 @@ export function Toolbox() {
           <button
             className={`${styles.menuItem} ${styles.dangerItem}`}
             type="button"
+            disabled={!g.pins.length}
+            onClick={() => {
+              setPop(null)
+              g.actions.current?.clearPins()
+            }}
+          >
+            {PinSmall}
+            All pins
+            <span className={styles.confirmCount}>{g.pins.length}</span>
+          </button>
+          <button
+            className={`${styles.menuItem} ${styles.dangerItem}`}
+            type="button"
+            disabled={!hasGrid && !g.areaBounds}
             onClick={() => {
               setPop(null)
               g.actions.current?.clearAll()

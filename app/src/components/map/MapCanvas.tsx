@@ -471,6 +471,15 @@ export function MapCanvas({
         g.setGridNote('')
         commitCells()
       },
+      /**
+       * Pins are their own layer and outlive the grid on purpose — a pin is a
+       * place you found, not part of the search pattern over it — so taking
+       * them off is its own action rather than a side effect of clearing.
+       */
+      clearPins: () => {
+        layers.current.pinLayer.clearLayers()
+        g.setPins([])
+      },
       /** Keeps the grid and the area, and only takes the marks off it. */
       clearMarks: () => {
         cellsRef.current.forEach((c) => {

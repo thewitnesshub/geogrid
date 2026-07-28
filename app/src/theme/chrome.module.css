@@ -439,23 +439,23 @@
   z-index: 600;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   background: var(--osw-glass);
   backdrop-filter: blur(var(--osw-blur));
   -webkit-backdrop-filter: blur(var(--osw-blur));
   border: 1px solid var(--osw-border);
   border-radius: var(--osw-radius-xl);
   box-shadow: var(--osw-shadow-island);
-  padding: 5px 7px;
+  padding: 6px 8px;
 }
 /* static: popovers centre on the whole bar, not the icon */
 .railItem {
   display: flex;
 }
 .railBtn {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
   padding: 0;
   border-radius: var(--osw-radius-rail);
   background: transparent;
@@ -466,8 +466,8 @@
   justify-content: center;
 }
 .railBtn svg {
-  width: 18px;
-  height: 18px;
+  width: 21px;
+  height: 21px;
 }
 .railBtn:hover:not(:disabled) {
   background: var(--osw-hover-strong);
@@ -494,7 +494,7 @@
 }
 .railDiv {
   width: 1px;
-  height: 24px;
+  height: 27px;
   background: var(--osw-border);
   margin: 0 3px;
   flex-shrink: 0;

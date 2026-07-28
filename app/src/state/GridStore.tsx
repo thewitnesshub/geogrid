@@ -28,6 +28,8 @@ export interface MapActions {
   clearAll: () => void
   /** Takes the marks off the cells but leaves the grid and its area standing. */
   clearMarks: () => void
+  /** Takes every dropped pin off the map; the grid is untouched. */
+  clearPins: () => void
   setDrawMode: (on: boolean) => void
   setPaintMode: (m: PaintMode) => void
   flyTo: (lat: number, lng: number, zoom?: number) => void
