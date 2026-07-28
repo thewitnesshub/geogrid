@@ -80,9 +80,20 @@ a.link {
   -webkit-user-select: text;
   user-select: text;
 }
+/* A tool says what it is under the pointer. Drawing is a crosshair — it places
+   a corner, and a corner wants precision, not a picture. Brushing takes the
+   ordinary hand, because marking a cell is the ordinary thing to do to one;
+   only the eraser wears a glyph, set as --tool-cursor by the map, because
+   taking marks away is worth saying. Both rules name .leaflet-interactive as
+   well, because the cells carry Leaflet's own pointer cursor and would
+   otherwise punch a hole in the tool right where you are using it. */
+.mapCanvas.drawingbox,
+.mapCanvas.drawingbox .leaflet-interactive {
+  cursor: crosshair;
+}
 .mapCanvas.painting,
 .mapCanvas.painting .leaflet-interactive {
-  cursor: crosshair;
+  cursor: var(--tool-cursor, crosshair);
 }
 /* Leaflet drops touch-action to pan-x/pan-y whenever dragging is off, which
    hands the gesture to the browser and kills the pointermove stream mid-stroke.

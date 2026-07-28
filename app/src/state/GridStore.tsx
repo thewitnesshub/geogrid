@@ -26,6 +26,8 @@ export interface MapActions {
    */
   generate: (cellKm?: number) => void
   clearAll: () => void
+  /** Takes the marks off the cells but leaves the grid and its area standing. */
+  clearMarks: () => void
   setDrawMode: (on: boolean) => void
   setPaintMode: (m: PaintMode) => void
   flyTo: (lat: number, lng: number, zoom?: number) => void
@@ -66,6 +68,15 @@ interface GridState {
   gridNote: string
   setGridNote: (s: string) => void
 
+  /**
+   * Bumped every time a grid is committed, however it was made. The chrome
+   * watches this rather than "are there cells now", so drawing a box and
+   * filling a region behave alike, and so replacing a grid counts as much as
+   * making the first one.
+   */
+  gridEpoch: number
+  noteGridCreated: () => void
+
   mapRef: React.MutableRefObject<LMap | null>
   actions: React.MutableRefObject<MapActions | null>
 }
@@ -84,6 +95,7 @@ export function GridProvider({ children }: { children: ReactNode }) {
   const [paintMode, setPaintMode] = useState<PaintMode>(null)
   const [focus, setFocus] = useState(false)
   const [gridNote, setGridNote] = useState('')
+  const [gridEpoch, setGridEpoch] = useState(0)
 
   const mapRef = useRef<LMap | null>(null)
   const actions = useRef<MapActions | null>(null)
@@ -116,11 +128,13 @@ export function GridProvider({ children }: { children: ReactNode }) {
       setFocus,
       gridNote,
       setGridNote,
+      gridEpoch,
+      noteGridCreated: () => setGridEpoch((n) => n + 1),
       mapRef,
       actions,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cells, pins, gridColor, cellKm, areaBounds, regionLabel, base, drawing, paintMode, focus, gridNote],
+    [cells, pins, gridColor, cellKm, areaBounds, regionLabel, base, drawing, paintMode, focus, gridNote, gridEpoch],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

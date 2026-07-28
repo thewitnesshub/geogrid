@@ -6,7 +6,7 @@ import { RegionPopover } from './RegionPopover'
 import { fmtSize, kmToSlider, maxSliderPos, minSliderPos, sliderToKm } from '../../lib/gridMath'
 import { HAS_MOUSE, PAINT_KEY } from '../../lib/platform'
 
-type Pop = null | 'region' | 'size'
+type Pop = null | 'region' | 'size' | 'clear'
 
 const GridIcon = (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -37,6 +37,18 @@ const EraserIcon = (
     <path d="M8.5 20.5H21" /><path d="m9.4 8.6 6 6" />
   </svg>
 )
+const EraserSmall = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8.5 20.5 3.8 15.8a2 2 0 0 1 0-2.83l8.9-8.9a2 2 0 0 1 2.83 0l4.7 4.7a2 2 0 0 1 0 2.83L12.5 20.5z" />
+    <path d="M8.5 20.5H21" />
+  </svg>
+)
+const TrashSmall = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+)
 const TrashIcon = (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="3 6 5 6 21 6" />
@@ -55,6 +67,9 @@ export function Toolbox() {
   const [pop, setPop] = useState<Pop>(null)
   const box = useRef<HTMLDivElement | null>(null)
   const hasGrid = g.cells.length > 0
+  // Read fresh on every open: a mark mutates the cell in place without a
+  // re-render, and opening the clear popover is itself the render that reads it.
+  const marked = g.cells.reduce((n, c) => n + (c.searched ? 1 : 0), 0)
   // The track covers only what this area can hold, so the thumb never springs
   // back: below the floor the grid breaks the cell cap, above the ceiling a
   // single cell no longer fits inside the area.
@@ -75,15 +90,36 @@ export function Toolbox() {
     if (!hasGrid && pop === 'size') setPop(null)
   }, [hasGrid, pop])
 
-  // A new grid opens its settings: the size is the first thing anyone wants to
-  // change once they can see the cells, and the slider is otherwise two clicks
-  // away behind a gear. Only on the transition, so closing it makes it stay
-  // closed while you work.
-  const had = useRef(false)
+  // Escape backs out of the confirm, which is the other half of being able to
+  // cancel it. Capture, so it answers before the app-wide Escape does.
   useEffect(() => {
-    if (hasGrid && !had.current) setPop('size')
-    had.current = hasGrid
-  }, [hasGrid])
+    if (pop !== 'clear') return
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      setPop(null)
+    }
+    document.addEventListener('keydown', esc, true)
+    return () => document.removeEventListener('keydown', esc, true)
+  }, [pop])
+
+  // A new grid opens its settings: the cell size, which is the thing anyone
+  // reaches for once the cells are on screen. The palette stays shut — the
+  // swatch already shows the colour in use, and opening it unasked would cover
+  // the grid you just made with the choices you did not ask to see.
+  //
+  // Driven by the grid epoch rather than by "are there cells now", so drawing a
+  // box and filling a region do the same thing, and so replacing a grid opens
+  // them again instead of only the first one ever doing it.
+  //
+  // Deferred a tick because drawing ends in a click on the map, and that click
+  // reaches the dismiss-on-outside-click handlers below. Opening in the same
+  // turn would be undone by the gesture that asked for it.
+  useEffect(() => {
+    if (!g.gridEpoch) return
+    const t = window.setTimeout(() => setPop('size'), 0)
+    return () => window.clearTimeout(t)
+  }, [g.gridEpoch])
 
   /** leading + trailing throttle (~70ms) so dragging the slider stays smooth */
   const liveRegen = (km: number) => {
@@ -205,19 +241,55 @@ export function Toolbox() {
         {EraserIcon}
       </button>
 
-      <button
-        className={`${styles.railBtn} ${styles.clearBtn}`}
-        type="button"
-        disabled={!hasGrid && !g.areaBounds}
-        data-tip="Clear grid"
-        aria-label="Clear grid"
-        onClick={() => {
-          setPop(null)
-          g.actions.current?.clearAll()
-        }}
-      >
-        {TrashIcon}
-      </button>
+      <div className={styles.railItem}>
+        <button
+          className={`${styles.railBtn} ${styles.clearBtn} ${pop === 'clear' ? styles.active : ''}`}
+          type="button"
+          disabled={!hasGrid && !g.areaBounds}
+          data-tip="Clear grid"
+          aria-label="Clear grid"
+          aria-haspopup="true"
+          aria-expanded={pop === 'clear'}
+          onClick={() => setPop(pop === 'clear' ? null : 'clear')}
+        >
+          {TrashIcon}
+        </button>
+
+        {/* Clearing has no undo, so it asks first — and asks what to clear,
+            because losing an afternoon of marks is a different mistake from
+            losing the grid they sit on. */}
+        <div className={`${styles.railPop} ${pop === 'clear' ? styles.open : ''}`}>
+          <div className={styles.railPopLabel}>Clear what?</div>
+          <button
+            className={`${styles.menuItem} ${styles.dangerItem}`}
+            type="button"
+            disabled={!marked}
+            onClick={() => {
+              setPop(null)
+              g.actions.current?.clearMarks()
+            }}
+          >
+            {EraserSmall}
+            Marks only
+            <span className={styles.confirmCount}>{marked}</span>
+          </button>
+          <button
+            className={`${styles.menuItem} ${styles.dangerItem}`}
+            type="button"
+            onClick={() => {
+              setPop(null)
+              g.actions.current?.clearAll()
+            }}
+          >
+            {TrashSmall}
+            The whole grid
+          </button>
+          <div className={styles.menuSep} />
+          <button className={styles.menuItem} type="button" onClick={() => setPop(null)}>
+            Cancel
+          </button>
+        </div>
+      </div>
 
       <div className={styles.railDiv} />
 

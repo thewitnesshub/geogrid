@@ -16,6 +16,48 @@ import { useToast } from '../../hooks/useToast'
 const token = (name: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 
+/** The glyph the rail shows for the eraser, so the cursor is the same mark. */
+const ERASER_PATH =
+  '<path d="M8.5 20.5 3.8 15.8a2 2 0 0 1 0-2.83l8.9-8.9a2 2 0 0 1 2.83 0l4.7 4.7a2 2 0 0 1 0 2.83L12.5 20.5z"/>' +
+  '<path d="M8.5 20.5H21"/>'
+
+/**
+ * The eraser's glyph, drawn as the cursor.
+ *
+ * Only the eraser gets one. The brush is the ordinary way to touch a cell and
+ * takes the ordinary hand; the eraser takes marks away, and that is worth
+ * saying under the pointer.
+ *
+ * It lands on map imagery, which does not follow the theme, so it is built
+ * from the theme-invariant scrim pair: the light on-scrim ink over a heavier
+ * dark casing, the same trick that keeps a label legible on a bright tile and
+ * a dark one. A cursor cannot read a custom property, so the colours are
+ * resolved here rather than left to the cascade — the same reason the markers
+ * are built this way. The hotspot sits on the tip, low and left, not in the
+ * middle of the glyph.
+ */
+/** Matched to the pointer hand it swaps places with, so switching tools does
+ *  not change how much of the map the cursor covers. */
+const CURSOR_PX = 20
+/** The tip of the eraser in the 24-unit viewBox, carried to the rendered size
+ *  so the hotspot stays on the tip whatever CURSOR_PX becomes. */
+const TIP = { x: 4, y: 20.5 }
+
+const toolCursor = (paths: string) => {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${CURSOR_PX}" height="${CURSOR_PX}" viewBox="0 0 24 24" ` +
+    'fill="none" stroke-linecap="round" stroke-linejoin="round">' +
+    `<g stroke="${token('--osw-scrim-strong')}" stroke-width="4.5">${paths}</g>` +
+    `<g stroke="${token('--osw-on-scrim')}" stroke-width="1.8">${paths}</g></svg>`
+  const hot = (v: number) => Math.round((v / 24) * CURSOR_PX)
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}") ${hot(TIP.x)} ${hot(TIP.y)}, crosshair`
+}
+
+/** Built on first use — the tokens do not resolve until the styles are in. */
+let eraserCursor = ''
+const cursorFor = (mode: PaintMode) =>
+  mode === 'erase' ? (eraserCursor ||= toolCursor(ERASER_PATH)) : 'pointer'
+
 interface Props {
   /** Hints are shown by the parent; the map reports events that should retire them. */
   onGridCreated: () => void
@@ -62,7 +104,6 @@ export function MapCanvas({
   useEffect(() => {
     gridColorRef.current = g.gridColor
     cellsRef.current.forEach(paintCell)
-    layers.current.regionLayer?.setStyle({ color: g.gridColor })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [g.gridColor])
   useEffect(() => {
@@ -77,7 +118,11 @@ export function MapCanvas({
     paintMode.current = g.paintMode
     const map = g.mapRef.current
     if (!map) return
-    map.getContainer().classList.toggle('painting', !!g.paintMode)
+    const el = map.getContainer()
+    el.classList.toggle('painting', !!g.paintMode)
+    // Set as a custom property rather than `cursor` directly: it has to reach
+    // the cells too, and they carry Leaflet's own pointer cursor.
+    el.style.setProperty('--tool-cursor', g.paintMode ? cursorFor(g.paintMode) : '')
     if (g.paintMode) map.dragging.disable()
     else if (!drawing.current) map.dragging.enable()
   }, [g.paintMode, g.mapRef])
@@ -190,6 +235,9 @@ export function MapCanvas({
     g.setDrawing(false)
     generate(b, geo)
     onGridCreated()
+    // Both routes into a grid end here — the drawn box and the filled region —
+    // which is what makes them behave the same for the chrome downstream.
+    g.noteGridCreated()
   }
 
   const generate = (b: LatLngBounds | null, geo: RegionFeature | null) => {
@@ -290,7 +338,9 @@ export function MapCanvas({
     const map = g.mapRef.current
     if (!map) return
     const begin = () => {
+      // Holding the modifier is brushing, so it takes the same hand.
       map.getContainer().classList.add('painting')
+      map.getContainer().style.setProperty('--tool-cursor', cursorFor('brush'))
       if (map.dragging.enabled()) {
         map.dragging.disable()
         paint.current.dragWasOn = true
@@ -302,6 +352,7 @@ export function MapCanvas({
       onModifierMode(false)
       if (paintMode.current) return
       map.getContainer().classList.remove('painting')
+      map.getContainer().style.setProperty('--tool-cursor', '')
       if (paint.current.dragWasOn) {
         map.dragging.enable()
         paint.current.dragWasOn = false
@@ -420,6 +471,14 @@ export function MapCanvas({
         g.setGridNote('')
         commitCells()
       },
+      /** Keeps the grid and the area, and only takes the marks off it. */
+      clearMarks: () => {
+        cellsRef.current.forEach((c) => {
+          c.searched = false
+          paintCell(c)
+        })
+        commitCells()
+      },
       setDrawMode: (on) => g.setDrawing(on),
       setPaintMode: (m) => g.setPaintMode(m),
       flyTo: (lat, lng, zoom) => g.mapRef.current?.setView([lat, lng], zoom ?? g.mapRef.current.getZoom()),
@@ -429,8 +488,13 @@ export function MapCanvas({
         if (!map) return
         if (layers.current.regionLayer) map.removeLayer(layers.current.regionLayer)
         const feature = { type: 'Feature', properties: {}, geometry: geo } as RegionFeature
+        // The accent, not the grid colour. The outline is not part of the grid
+        // — it is the boundary the grid was cut from — so it should not move
+        // when the grid's colour does, and holding it apart is what lets you
+        // read cell against border. Brand is one value in both themes, so
+        // reading it once here is safe.
         const gj = L.geoJSON(geo as never, {
-          style: { color: gridColorRef.current, weight: 2, fill: false, dashArray: '6,5' },
+          style: { color: token('--osw-brand'), weight: 2, fill: false, dashArray: '6,5' },
         }).addTo(map)
         layers.current.regionLayer = gj
         g.setRegionLabel(label)

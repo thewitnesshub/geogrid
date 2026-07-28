@@ -93,8 +93,12 @@
      omit it. */
   --osw-selected-edge: rgba(82, 93, 255, 0.45);
 
-  /* The border of an ENGAGED TEXT INPUT and nothing else. Buttons and toggles
-     never ring. 7.14:1 dark / 4.93:1 light on bg. */
+  /* The border of an ENGAGED TEXT INPUT, and the ring on a focused SLIDER THUMB.
+     Nothing else: buttons and toggles never ring, because any keypress
+     retroactively rings whatever the pointer last clicked. Those two are exempt
+     because focus there marks an engaged control the keyboard genuinely drives — a
+     text field being typed into, a thumb the arrow keys will move. 7.14:1 dark /
+     4.93:1 light on bg. */
   --osw-focus: #8d94ff;
 
   /* Supporting structure: count pills, keyboard hints, readouts, section headings.
@@ -156,6 +160,26 @@
      alone vanishes on a dark tile, which is exactly where shadow analysis tends to
      look. The same legibility job as shadow.text-halo, done with a line. */
   --osw-cast-shadow-halo: rgba(255, 255, 255, 0.8);
+
+  /* THEME-INVARIANT. The sun itself, drawn on map imagery — where it is in the
+     marker's sky. Warm gold because that is what the thing IS; this is NOT a
+     second accent hue and never appears in chrome (no sun-coloured buttons,
+     borders or labels). It sits outside the identity palette on purpose: those ten
+     colours encode which SUBJECT something is, and the sun is not a subject — it
+     is a computed fact, like cast-shadow. Always drawn over sun-edge. */
+  --osw-sun: #ffc933;
+
+  /* THEME-INVARIANT. The hot centre of the sun disc — the inner stop of a radial
+     gradient that lands on `sun` at the rim. A flat gold disc reads as a sticker;
+     a body that is brightest at its middle reads as a light source, which is the
+     one thing this mark has to say. */
+  --osw-sun-core: #fff4cc;
+
+  /* Theme-invariant. The dark rim and casing under everything drawn in `sun`: the
+     disc's edge, the ray's casing, the horizon ring's backing. Gold on a bright
+     overexposed tile is nearly invisible without it — the mirror of
+     cast-shadow-halo, which lightens a dark line for the same reason. */
+  --osw-sun-edge: rgba(8, 11, 18, 0.7);
 
   /* Theme-invariant sibling of coin-ring: the edge on a subject coin drawn ON
      IMAGERY rather than on a panel. Its backdrop is the tile, not the theme, so
@@ -249,6 +273,11 @@
   /* Anything anchored to the bottom edge adds this, so it clears an iPhone's home
      bar. */
   --osw-safe-b: env(safe-area-inset-bottom, 0px);
+
+  /* The top-edge counterpart, for chrome pinned under a notch or status bar. A
+     token rather than an inlined env() because two tools had already written the
+     same expression by hand. */
+  --osw-safe-t: env(safe-area-inset-top, 0px);
   --osw-id-red: #ff3b30;
   --osw-id-orange: #ff9500;
   --osw-id-yellow: #ffd60a;
@@ -374,6 +403,9 @@
   --osw-on-scrim: #f4f5f7;
   --osw-cast-shadow: rgba(8, 11, 18, 0.65);
   --osw-cast-shadow-halo: rgba(255, 255, 255, 0.8);
+  --osw-sun: #ffc933;
+  --osw-sun-core: #fff4cc;
+  --osw-sun-edge: rgba(8, 11, 18, 0.7);
   --osw-coin-ring-imagery: rgba(255, 255, 255, 0.9);
   --osw-coin-ring: rgba(0, 0, 0, 0.45);
   --osw-shadow-island: 0 12px 34px rgba(0, 0, 0, 0.5);
@@ -408,6 +440,7 @@
   --osw-sidebar-w: 280px;
   --osw-blur: 12px;
   --osw-safe-b: env(safe-area-inset-bottom, 0px);
+  --osw-safe-t: env(safe-area-inset-top, 0px);
   --osw-id-red: #ff3b30;
   --osw-id-orange: #ff9500;
   --osw-id-yellow: #ffd60a;

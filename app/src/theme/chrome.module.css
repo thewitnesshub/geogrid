@@ -64,7 +64,12 @@
   gap: 10px;
 }
 
-/* position:relative so the suggestion list anchors to the bar, not the grid. */
+/* position:relative so the suggestion list anchors to the bar, not the grid.
+   Glass, like the .chromeNav it shares this cell with — two islands touching each
+   other in the same row at the same height are one recipe, so they take the same
+   blur, hairline, radius and island shadow (The One Bar Rule). The one step this
+   one takes is to the strong glass, because it holds reading material — typed
+   text and a suggestion list — rather than a row of buttons. */
 .searchBar {
   grid-area: 1/1;
   justify-self: center;
@@ -75,10 +80,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--osw-surface);
+  background: var(--osw-glass-strong);
+  backdrop-filter: blur(var(--osw-blur));
+  -webkit-backdrop-filter: blur(var(--osw-blur));
   border: 1px solid var(--osw-border);
   border-radius: var(--osw-radius-xl);
-  box-shadow: var(--osw-shadow-chip);
+  box-shadow: var(--osw-shadow-island);
   padding: 0 5px 0 12px;
 }
 .searchBar > svg {
@@ -338,6 +345,24 @@
   height: 1px;
   background: var(--osw-border);
   margin: 4px 6px;
+}
+/* A menu row that destroys something. Danger is a signal here, not decoration:
+   it marks the two rows you cannot undo, and Cancel below the rule stays plain
+   so the safe way out does not compete with them for attention. */
+.dangerItem {
+  color: var(--osw-danger);
+}
+.dangerItem:disabled {
+  color: var(--osw-text-muted);
+  opacity: 0.55;
+}
+/* The count that makes the choice: how many marks "marks only" would take. */
+.confirmCount {
+  margin-left: auto;
+  font-family: var(--osw-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--osw-text-muted);
 }
 .menuKey {
   margin-left: auto;
@@ -711,18 +736,24 @@
   box-shadow: inset 0 0 0 1px var(--osw-selected-edge);
   color: var(--osw-text-strong);
 }
+/* Wraps rather than trailing off. The tail of a place name is where the
+   disambiguation lives — which Rijeka, which county, which country — so
+   clipping it hid the one part that tells two results apart. The list scrolls
+   already, so the extra lines cost nothing but height. */
 .suggestItem .sub {
   display: block;
   font-size: 10.5px;
   color: var(--osw-text-muted);
   margin-top: 1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  overflow-wrap: break-word;
 }
-.suggestItem:hover .sub,
+/* The muted tone does not survive the selected wash — it measures 3.69:1 (dark)
+   and 4.15:1 (light) on it, under AA in both themes. On the active row the
+   secondary line steps to `text` (9.41 / 12.01), which is still a tier below the
+   strong ink beside it, so the hierarchy holds without the legibility going. */
 .suggestItem.active .sub {
-  color: var(--osw-text-muted);
+  color: var(--osw-text);
 }
 .suggestNote {
   padding: 8px 10px;
@@ -833,7 +864,7 @@
 
 .focusExit {
   position: absolute;
-  top: calc(var(--osw-chrome-inset) + env(safe-area-inset-top, 0px));
+  top: calc(var(--osw-chrome-inset) + var(--osw-safe-t));
   right: var(--osw-chrome-inset);
   z-index: 640;
   width: 40px;
