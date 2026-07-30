@@ -3,7 +3,7 @@ import L, { type LatLng, type LatLngBounds, type Rectangle, type TileLayer } fro
 import { useGrid, type PaintMode } from '../../state/GridStore'
 import { bases, labelsOverlay } from '../../lib/basemaps'
 import { DATED, isDated, type DatedEntry } from '../../lib/datedSources'
-import { buildCellBounds, type RegionFeature } from '../../lib/gridMath'
+import { buildCellBounds, cellKmForArea, type RegionFeature } from '../../lib/gridMath'
 import { readStartView, writeView } from '../../lib/storage'
 import { fmtLatLng, earthUrl, sentinelUrl, uid } from '../../lib/geo'
 import type { Cell, EsriImageryMeta } from '../../lib/types'
@@ -453,6 +453,13 @@ export function MapCanvas({
     const map = g.mapRef.current
     if (!map) return
     region.current = geo
+    // Before the grid is cut, not after: the size in hand came from the last
+    // area and may not divide this one at all. Only steps in when it does not.
+    const sized = cellKmForArea(b, cellKmRef.current, geo ? 'cover' : 'inside')
+    if (sized !== cellKmRef.current) {
+      cellKmRef.current = sized
+      g.setCellKm(sized)
+    }
     g.setAreaBounds(b)
     g.setDrawing(false)
     g.setPolygonDrawing(false)

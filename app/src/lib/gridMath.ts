@@ -41,6 +41,50 @@ export const maxSliderPos = (bounds: LatLngBounds) =>
     Math.min(100, Math.floor(kmToSlider(maxCellToFit(bounds)) * 2) / 2),
   )
 
+/** Cells across the shorter side when the tool picks the size for you. */
+const TARGET_ACROSS = 8
+/** Below this it is not a search grid, it is one big square with a border. */
+const MIN_USEFUL_CELLS = 9
+
+/**
+ * Snap to the 1-2-5 sequence a scale bar uses, so a computed size lands on a
+ * number worth reading — 500 m rather than 487 m. Nearest rather than rounded
+ * down: flooring 3.75 to 2 doubles the cell count and overshoots the target.
+ */
+function snapNice(km: number): number {
+  const exp = Math.pow(10, Math.floor(Math.log10(km)))
+  const f = km / exp
+  let best = 1
+  for (const n of [1, 2, 5, 10]) if (Math.abs(n - f) < Math.abs(best - f)) best = n
+  return best * exp
+}
+
+/**
+ * The cell size a newly drawn area should start at.
+ *
+ * The size in hand belongs to the last grid, not this one, and an area two
+ * orders of magnitude smaller inherits a cell it cannot fit: you draw a block
+ * of houses at the 10 km left over from a province and get a single square.
+ *
+ * So the held size is kept whenever it still cuts a real grid of this area, and
+ * only replaced when it does not — when it is too coarse to divide the area at
+ * all, or so fine that CELL_CAP would step in and choose for you (and choose the
+ * most detail that fits, which for a province is 3000 cells nobody will sweep).
+ * Deliberate settings survive; the degenerate cases do not.
+ *
+ * The replacement aims for TARGET_ACROSS cells over the shorter side — that
+ * side is what maxCellToFit measures, so the aim is simply a fraction of it —
+ * then snaps to a round number and is held inside what the area can actually
+ * hold.
+ */
+export function cellKmForArea(bounds: LatLngBounds, held: number, fit: Fit): number {
+  const total = computeDims(bounds, held, fit).total
+  if (total >= MIN_USEFUL_CELLS && total <= CELL_CAP) return held
+  const ceiling = maxCellToFit(bounds)
+  const floor = clampCellToCap(bounds)
+  return Math.min(Math.max(snapNice(ceiling / TARGET_ACROSS), floor), ceiling)
+}
+
 export const fmtSize = (km: number) =>
   km < 1 ? `${Math.round((km * 1000) / 10) * 10} m` : `${km < 10 ? km.toFixed(1) : Math.round(km)} km`
 
