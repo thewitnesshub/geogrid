@@ -64,7 +64,13 @@ a.link {
 .mapwrap {
   position: relative;
   height: 100%;
+  /* clip, not hidden: hidden still lets the browser scroll the box
+     programmatically, and the closed drawer hangs 280px past the right edge —
+     so opening it could scroll-into-view the whole stage sideways and drag
+     every corner control off its anchor. clip forbids scrolling outright.
+     (hidden stays first as the fallback for engines without clip.) */
   overflow: hidden;
+  overflow: clip;
 }
 .mapCanvas {
   position: absolute;

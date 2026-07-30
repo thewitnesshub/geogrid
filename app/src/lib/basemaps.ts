@@ -52,6 +52,9 @@ export const labelsOverlay = () =>
 export interface BasemapOption {
   id: string
   label: string
+  /** What the picker button calls it. The menu has a full row to spell a
+      source out; the button under the glyph has about eight characters. */
+  short: string
 }
 export interface BasemapGroup {
   group: string
@@ -63,28 +66,37 @@ export const BASEMAP_GROUPS: BasemapGroup[] = [
   {
     group: 'Esri',
     options: [
-      { id: 'imagery', label: 'Imagery' },
-      { id: 'hybrid', label: 'Imagery + Labels' },
-      { id: 'street', label: 'Streets' },
-      { id: 'topo', label: 'Topographic' },
+      { id: 'imagery', label: 'Imagery', short: 'Imagery' },
+      { id: 'hybrid', label: 'Imagery + Labels', short: 'Hybrid' },
+      { id: 'street', label: 'Streets', short: 'Streets' },
+      { id: 'topo', label: 'Topographic', short: 'Topo' },
     ],
   },
   {
     group: 'By date',
     options: [
-      { id: 'sentinelDated', label: 'Sentinel-2 L2A' },
-      { id: 'wayback', label: 'Esri imagery archive' },
-      { id: 'gibs', label: 'NASA daily (VIIRS)' },
+      { id: 'sentinelDated', label: 'Sentinel-2 L2A', short: 'Sentinel' },
+      { id: 'wayback', label: 'Esri imagery archive', short: 'Archive' },
+      { id: 'gibs', label: 'NASA daily (VIIRS)', short: 'VIIRS' },
     ],
   },
   {
     group: 'OpenStreetMap',
     options: [
-      { id: 'osm', label: 'Standard' },
-      { id: 'hot', label: 'Humanitarian' },
-      { id: 'topoOsm', label: 'OpenTopoMap' },
+      { id: 'osm', label: 'Standard', short: 'OSM' },
+      { id: 'hot', label: 'Humanitarian', short: 'HOT' },
+      { id: 'topoOsm', label: 'OpenTopoMap', short: 'OpenTopo' },
     ],
   },
 ]
 
+/** id → short name, so the picker button can say what is on screen without
+    walking the groups every render. */
+export const BASEMAP_SHORT: Record<string, string> = Object.fromEntries(
+  BASEMAP_GROUPS.flatMap((g) => g.options.map((o) => [o.id, o.short])),
+)
+
 export const DEFAULT_BASE = 'hybrid'
+
+/** The one basemap with its own shortcut — the S key toggles it. */
+export const SENTINEL_ID = 'sentinelDated'

@@ -64,7 +64,9 @@ export function RegionPopover({ open, onDone }: { open: boolean; onDone: () => v
   const pick = (h: Hit) => {
     close()
     setQ(h.label)
-    g.actions.current?.setRegion(h.geo, h.sub)
+    // The place, not where it is: this names the grid in the sidebar, and
+    // "Primorje-Gorski Kotar County, Croatia" is not what you searched for.
+    g.actions.current?.setRegion(h.geo, h.label)
     toast(`Filled ${h.label}`)
     onDone()
   }

@@ -442,8 +442,14 @@ export function MapCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** Adopt a new search area — from a drawn box or a loaded region — and fill it. */
-  const commitArea = (b: LatLngBounds, geo: RegionFeature | null) => {
+  /**
+   * Adopt a new search area — from a drawn box or a loaded region — and fill it.
+   * `label` is the place a region was searched by; a grid cut from Rijeka is
+   * called Rijeka, because that is the only name for it anyone would recognise.
+   * The serial only advances for grids that need a made-up name, so a drawn box
+   * either side of a named region still counts 1, 2.
+   */
+  const commitArea = (b: LatLngBounds, geo: RegionFeature | null, label?: string) => {
     const map = g.mapRef.current
     if (!map) return
     region.current = geo
@@ -451,7 +457,7 @@ export function MapCanvas({
     g.setDrawing(false)
     g.setPolygonDrawing(false)
     const id = uid()
-    const name = `Grid ${++gridSerial.current}`
+    const name = label?.trim() || `Grid ${++gridSerial.current}`
     const layer = L.layerGroup()
     layer.addTo(layers.current.grid)
     const boundary = geo ? layers.current.pendingBoundary : null
@@ -763,7 +769,7 @@ export function MapCanvas({
         layers.current.pendingBoundary = gj
         g.setRegionLabel(label)
         map.fitBounds(gj.getBounds())
-        commitArea(gj.getBounds(), feature)
+        commitArea(gj.getBounds(), feature, label)
       },
       setActiveGrid: activateGrid,
       setGridVisible: (id, visible) => {

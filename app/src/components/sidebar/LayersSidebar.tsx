@@ -29,9 +29,11 @@ const EyeOffIcon = (
 
 interface Props {
   open: boolean
+  /** Raised the moment the drawer is used, so a timed peek stops counting. */
+  onHold?: () => void
 }
 
-export function LayersSidebar({ open }: Props) {
+export function LayersSidebar({ open, onHold }: Props) {
   const g = useGrid()
   const [pickedGrids, setPickedGrids] = useState<Set<string>>(new Set())
   const [pickedPins, setPickedPins] = useState<Set<string>>(new Set())
@@ -76,6 +78,9 @@ export function LayersSidebar({ open }: Props) {
       className={`${styles.drawer} ${open ? styles.open : ''}`}
       aria-label="Map layers"
       aria-hidden={!open}
+      onMouseEnter={onHold}
+      onFocusCapture={onHold}
+      onPointerDown={onHold}
     >
       <div className={styles.scroll}>
         <div className={styles.sectionHead}>

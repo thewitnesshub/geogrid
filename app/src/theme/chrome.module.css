@@ -192,34 +192,6 @@
   display: flex;
 }
 
-.basemapPanel {
-  gap: 3px;
-  padding: 6px;
-  min-width: 158px;
-}
-.basemapPanel button {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 8px 10px;
-  border-radius: var(--osw-radius-xs);
-  font-size: 12px;
-  color: var(--osw-text);
-}
-.basemapPanel button:hover {
-  background: var(--osw-hover);
-  border-color: var(--osw-border);
-}
-/* The basemap in use is a state, not an action — the wash register, held under
-   the pointer. */
-.basemapPanel button.active,
-.basemapPanel button.active:hover {
-  background: var(--osw-selected);
-  border-color: var(--osw-selected-edge);
-  color: var(--osw-text-strong);
-  font-weight: 600;
-}
 .bmGroup {
   font-size: 9.5px;
   text-transform: uppercase;
@@ -382,22 +354,19 @@
   line-height: 1;
 }
 
-/* ---------- Date picker, shared by the dated basemaps ---------- */
-.dateCtl {
-  position: absolute;
-  top: calc(var(--osw-chrome-inset) + var(--osw-chrome-h) + 10px);
-  right: var(--osw-chrome-inset);
-  z-index: 600;
-  display: none;
-  background: var(--osw-surface);
-  border: 1px solid var(--osw-border);
-  border-radius: var(--osw-radius-lg);
-  padding: 8px;
-  box-shadow: var(--osw-shadow-popover);
-  width: 236px;
-}
-.dateCtl.show {
-  display: block;
+/* ---------- Date stepper, shared by the dated basemaps ---------- */
+/* Not a card of its own: it seats *inside* the picker island, right of the
+   satellite button, so the corner is one control — the source, then the pass
+   of it you are looking at, in the order you choose them. Its two rows come to
+   the button's own 46px, pinned rather than left to the content, so the island
+   keeps the rail's height and the bands measured off it stay true. */
+.dateInline {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  height: 46px;
+  min-width: 0;
 }
 .senRow {
   display: flex;
@@ -419,7 +388,10 @@
   background: var(--osw-surface-highest);
 }
 .senRow select {
-  flex: 1;
+  flex: 0 1 auto;
+  /* Seats the longest label a pass produces — "2026-07-26 · 98% cloud" — plus
+     the native arrow, so the date never breaks mid-word. */
+  width: 178px;
   min-width: 0;
   height: 32px;
   background: var(--osw-surface-low);
@@ -430,22 +402,31 @@
   padding: 0 7px;
   outline: none;
 }
+/* One line inside the island, so it clips rather than wrapping the box taller. */
 .senMeta {
   font-size: 10.5px;
   color: var(--osw-text-muted);
-  margin-top: 6px;
-  line-height: 1.4;
+  line-height: 1.1;
+  max-width: 226px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+/* Tile metadata, not chrome: a bare chip in the margin beside the attribution
+   it annotates. It used to borrow the date card's box; that card is now a
+   section of the picker island, so this stands on its own. */
 .esriDate {
-  top: auto;
+  position: absolute;
   right: 6px;
   bottom: calc(20px + var(--osw-safe-b));
+  z-index: 600;
   display: flex;
   align-items: baseline;
   gap: 4px;
-  width: auto;
   max-width: calc(100vw - 12px);
   padding: 3px 6px;
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
   border-radius: var(--osw-radius-xs);
   box-shadow: var(--osw-shadow-chip);
   color: var(--osw-text-muted);
@@ -461,16 +442,21 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Bottom icon rail ---------- */
-.toolbox {
+/* ---------- Bottom islands: the tool rail, and the basemap picker ---------- */
+/* The floating-glass recipe, written once. Two islands sit in the bottom row at
+   the same height, so per The One Bar Rule they take the same blur, hairline,
+   radius and island shadow — composed rather than restated, which is what stops
+   the two of them drifting apart the next time one is touched. */
+.island {
+  /* Layout arithmetic, not a design value: the band the floating bottom chrome
+     sits in. Named because the corner island reads it on two edges — a control
+     12px from the left and 22px from the bottom does not look like a corner. */
+  --gg-band: 22px;
   position: absolute;
-  bottom: calc(22px + var(--osw-safe-b));
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: calc(var(--gg-band) + var(--osw-safe-b));
   z-index: 600;
   display: flex;
   align-items: center;
-  gap: 5px;
   background: var(--osw-glass);
   backdrop-filter: blur(var(--osw-blur));
   -webkit-backdrop-filter: blur(var(--osw-blur));
@@ -478,6 +464,13 @@
   border-radius: var(--osw-radius-xl);
   box-shadow: var(--osw-shadow-island);
   padding: 6px 8px;
+}
+
+.toolbox {
+  composes: island;
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 5px;
 }
 /* static: popovers centre on the whole bar, not the icon */
 .railItem {
@@ -546,6 +539,95 @@
 }
 .railPop.open {
   display: block;
+}
+/* ---------- Basemap picker: the bottom-left island ---------- */
+/* Google Earth's corner. It is its own island rather than a seat on the rail
+   because the rail arms tools that draw on the map, and this changes what the
+   map *is* — and because a control that names what you are looking at wants to
+   sit where nothing covers it. Same bottom edge and same button height as the
+   rail, so the two read as one row. */
+.baseIsland {
+  composes: island;
+  left: var(--gg-band);
+  gap: 5px;
+  /* Layout arithmetic, not a design value: the band this island owns — its 22px
+     inset + its own 60px height + the 14px menu gap — plus breathing room so
+     the menu stops short of the top bar rather than tucking under it. */
+  --gg-base-reserve: 110px;
+}
+/* The rail's button, widened to seat a caption under the glyph. Composed, not
+   restated: the hover, the armed state, the disabled guard and the 21px glyph
+   all come from .railBtn, so the two bottom islands cannot drift apart. */
+.baseBtn {
+  composes: railBtn;
+  flex-direction: column;
+  gap: 2px;
+  width: 62px;
+  min-width: 62px;
+}
+/* The source on screen, named. Micro/Meta — the smallest step the scale allows
+   a control label. Colour is left to currentColor on purpose, so the caption
+   follows the button through hover and armed instead of pinning its own tone. */
+.baseName {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  max-width: 58px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The menu, hung off the island's left edge and opening upward — so the shadow
+   points up, the way the region search's list does. */
+.basePanel {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 0;
+  z-index: 70;
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 190px;
+  padding: 6px;
+  background: var(--osw-surface);
+  border: 1px solid var(--osw-border);
+  border-radius: var(--osw-radius-lg);
+  box-shadow: var(--osw-shadow-menu-up);
+  /* Ten basemaps outgrow a short window: stop under the top bar and scroll,
+     rather than sliding the first group up behind it. */
+  max-height: calc(100vh - var(--osw-chrome-inset) - var(--osw-chrome-h) - var(--gg-base-reserve));
+  overflow-y: auto;
+}
+.basePanel.open {
+  display: flex;
+}
+/* Row layout is flex so the S chip pushes flush right. */
+.basePanel button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px 10px;
+  border-radius: var(--osw-radius-xs);
+  font-size: 12px;
+  color: var(--osw-text);
+}
+.basePanel button:hover {
+  background: var(--osw-hover);
+  border-color: var(--osw-border);
+}
+/* The basemap in use is a state, not an action — the wash register, held under
+   the pointer. */
+.basePanel button.active,
+.basePanel button.active:hover {
+  background: var(--osw-selected);
+  border-color: var(--osw-selected-edge);
+  color: var(--osw-text-strong);
+  font-weight: 600;
 }
 .railPopLabel {
   font-size: 11px;
@@ -816,45 +898,6 @@
   opacity: 0;
 }
 
-.statsBar {
-  position: absolute;
-  bottom: calc(26px + var(--osw-safe-b));
-  right: 46px;
-  z-index: 600;
-  display: flex;
-  background: var(--osw-glass);
-  backdrop-filter: blur(var(--osw-blur));
-  -webkit-backdrop-filter: blur(var(--osw-blur));
-  border: 1px solid var(--osw-border);
-  border-radius: var(--osw-radius-xl);
-  box-shadow: var(--osw-shadow-island);
-  overflow: hidden;
-}
-.fstat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 13px;
-  min-width: 58px;
-}
-.fstat + .fstat {
-  border-left: 1px solid var(--osw-border);
-}
-.fstat .n {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--osw-text);
-  font-family: var(--osw-font-mono);
-  font-variant-numeric: tabular-nums;
-}
-.fstat .l {
-  font-size: 8.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--osw-text-muted);
-  margin-top: 3px;
-}
 .gridNote {
   position: absolute;
   bottom: calc(96px + var(--osw-safe-b));
@@ -872,9 +915,11 @@
   color: var(--osw-danger);
 }
 
+/* Confirmation toasts land in the gridNote's band, clear of the rail — a
+   "Copied" chip at z-700 was blanketing the very buttons it confirmed. */
 .toast {
   position: absolute;
-  bottom: calc(20px + var(--osw-safe-b));
+  bottom: calc(96px + var(--osw-safe-b));
   left: 50%;
   transform: translateX(-50%);
   z-index: 700;
@@ -966,10 +1011,19 @@
 }
 
 /* ---------- Responsive: keep the floating bars from colliding ---------- */
-/* The stats bar has nowhere left to go once the toolbox spans the width. */
-@media (max-width: 840px) {
-  .statsBar {
-    display: none;
+/* A dated source roughly quadruples the island's width (~365px to its right
+   edge against the plain button's 102px), and the rail is centred and ~433px
+   wide — so below about 1200px the two can no longer share the bottom row. The
+   island takes its own row above the rail, which is the same move it already
+   makes on phones, and the centred transients clear it. */
+@media (max-width: 1200px) {
+  :global(body.dated) .baseIsland {
+    bottom: calc(92px + var(--osw-safe-b));
+    --gg-base-reserve: 166px;
+  }
+  :global(body.dated) .toast,
+  :global(body.dated) .gridNote {
+    bottom: calc(166px + var(--osw-safe-b));
   }
 }
 /* Phone: the search bar can no longer sit between the corner controls without
@@ -997,9 +1051,6 @@
     grid-row: 2;
     width: min(440px, 100%);
   }
-  :global(body.searchopen) .dateCtl {
-    top: calc(var(--osw-chrome-inset) + var(--osw-chrome-h) * 2 + 18px);
-  }
   :global(body.searchopen) .modeBadge {
     top: calc(var(--osw-chrome-inset) + var(--osw-chrome-h) * 2 + 18px);
   }
@@ -1008,14 +1059,12 @@
   .regionInput {
     font-size: 16px;
   }
-  .dateCtl {
-    width: min(236px, calc(100vw - 24px));
-  }
-  .esriDate,
-  :global(body.searchopen) .esriDate {
-    top: auto;
-    bottom: calc(20px + var(--osw-safe-b));
-    width: auto;
+  /* The picker island takes its own row here (see .baseIsland below), so the
+     centred transients clear it: 92 + the 60px island + the 14px gap. Their old
+     band is now the island's row. */
+  .toast,
+  .gridNote {
+    bottom: calc(166px + var(--osw-safe-b));
   }
   .modeBadge {
     width: max-content;
@@ -1023,6 +1072,22 @@
   }
   .railPop {
     width: min(236px, calc(100vw - 24px));
+  }
+  /* The rail is centred and ~433px wide, so a captioned island in the corner
+     only clears it above ~645px. Below that the picker takes its own row just
+     above the rail rather than shrinking into it — the corner is still the
+     corner, and the caption survives, which on a phone is the only thing left
+     saying what you are looking at. */
+  .baseIsland {
+    bottom: calc(92px + var(--osw-safe-b));
+    --gg-base-reserve: 166px;
+  }
+  /* An open phone search takes a second row off the top, so the menu has that
+     much less to grow into. */
+  :global(body.searchopen) .basePanel {
+    max-height: calc(
+      100vh - var(--osw-chrome-inset) - var(--osw-chrome-h) * 2 - 8px - var(--gg-base-reserve)
+    );
   }
 }
 /* smallest phones: shrink the rail so six icons still fit on one row */
@@ -1038,5 +1103,58 @@
   }
   .railDiv {
     margin: 0 2px;
+  }
+  /* The rail loses 12px of height here, and the picker is the same object in
+     another corner — so it shrinks with it rather than looming over it. The
+     button keeps its width for the caption; only the height follows the rail
+     (composed from .railBtn), and the glyph steps down to leave room. */
+  .baseIsland {
+    padding: 5px;
+    bottom: calc(80px + var(--osw-safe-b));
+    --gg-base-reserve: 142px;
+  }
+  .baseBtn {
+    width: 58px;
+    min-width: 58px;
+  }
+  .baseBtn svg {
+    width: 17px;
+    height: 17px;
+  }
+  .baseName {
+    max-width: 54px;
+  }
+  /* The island row drops to 80 and shrinks to 48 tall, so what sits above it
+     follows: 80 + 48 + 14. */
+  .toast,
+  .gridNote {
+    bottom: calc(142px + var(--osw-safe-b));
+  }
+  /* Carrying a stepper it is a bigger object than the rail, so it keeps the
+     full-height button and padding rather than shrinking around a control that
+     cannot: 80 + its own 60 + 14. Body-qualified so it outranks the plain rules
+     above, which is also why this block must stay below the 1200px one. */
+  :global(body.dated) .baseIsland {
+    padding: 6px 8px;
+    bottom: calc(80px + var(--osw-safe-b));
+    --gg-base-reserve: 154px;
+  }
+  :global(body.dated) .baseBtn {
+    height: 46px;
+  }
+  :global(body.dated) .baseBtn svg {
+    width: 19px;
+    height: 19px;
+  }
+  :global(body.dated) .toast,
+  :global(body.dated) .gridNote {
+    bottom: calc(154px + var(--osw-safe-b));
+  }
+  /* The narrowest phones cannot seat a 158px select and still clear the edge. */
+  .senRow select {
+    width: 122px;
+  }
+  .senMeta {
+    max-width: 190px;
   }
 }

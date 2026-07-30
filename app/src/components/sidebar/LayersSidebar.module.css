@@ -133,12 +133,20 @@
   height: 15px;
 }
 
+/* Name left, measurement right, on one baseline. The two used to be bare
+   inline spans in a box with no display of its own, so they ran together —
+   "Grid 1" and its cell count touching, reading as one word. */
 .copy {
   min-width: 0;
   flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .label {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   color: var(--osw-text);
   font-size: 12px;
@@ -146,12 +154,16 @@
   white-space: nowrap;
 }
 
+/* Pushed to the row's far edge, and last to give up room — a count is short,
+   a place name is what actually needs the ellipsis. */
 .meta {
-  margin-top: 1px;
+  flex: 0 1 auto;
+  min-width: 0;
   overflow: hidden;
   color: var(--osw-text-muted);
   font-family: var(--osw-font-mono);
   font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

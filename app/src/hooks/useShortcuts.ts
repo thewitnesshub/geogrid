@@ -9,6 +9,7 @@ export interface ShortcutHandlers {
   brush: () => void
   eraser: () => void
   basemap: () => void
+  sentinel: () => void
   exportKml: () => void
   focus: () => void
   search: () => void
@@ -30,6 +31,7 @@ const KEYS: { key: string; run: keyof ShortcutHandlers }[] = [
   { key: 'b', run: 'brush' },
   { key: 'x', run: 'eraser' },
   { key: 'm', run: 'basemap' },
+  { key: 's', run: 'sentinel' },
   { key: 'e', run: 'exportKml' },
   { key: 'f', run: 'focus' },
   { key: '/', run: 'search' },
@@ -80,6 +82,7 @@ export function SHORTCUT_DOC() {
       group: 'Map',
       rows: [
         { label: 'Basemap picker', caps: ['M'] },
+        { label: 'Sentinel-2 imagery, and back', caps: ['S'] },
         { label: 'Export to KML', caps: ['E'] },
         { label: 'Focus mode', caps: ['F'] },
         { label: 'Search a place', caps: ['/'] },

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import styles from '../../theme/chrome.module.css'
 import { AppMenu } from './AppMenu'
 import { PlaceSearch } from './PlaceSearch'
-import { BasemapControl } from './BasemapControl'
 import { ExportControl } from './ExportControl'
 import type { ThemeChoice } from '../../lib/types'
 
@@ -23,10 +22,10 @@ const MagIcon = (
     <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 )
-/* Lucide's panel-right. Deliberately not a stack of plates: that glyph belongs
-   to the basemap button two along, which really is a stack of map tiles. This
-   one opens the drawer on the right listing the grids and pins you have made,
-   so it names the surface it opens rather than competing for "layers". */
+/* Lucide's panel-right. It opens the drawer on the right listing the grids and
+   pins you have made, so it names the surface it opens rather than reaching for
+   "layers" — which in this app now means the imagery, and wears a satellite
+   down in the bottom-left corner. */
 const LayerListIcon = (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect width="18" height="18" x="3" y="3" rx="2" />
@@ -92,7 +91,6 @@ export function TopBar(p: Props) {
           {LayerListIcon}
         </button>
         <ExportControl />
-        <BasemapControl />
       </div>
     </div>
   )

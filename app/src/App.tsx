@@ -8,14 +8,25 @@ import { HAS_MOUSE, PAINT_KEY } from './lib/platform'
 import { MapCanvas } from './components/map/MapCanvas'
 import { TopBar } from './components/topbar/TopBar'
 import { Toolbox } from './components/rail/Toolbox'
-import { DateControl, EsriDateBadge, FocusExit, GridNote, ModeBadge } from './components/overlay/Overlays'
+import { BasemapPicker } from './components/rail/BasemapPicker'
+import { EsriDateBadge, FocusExit, GridNote, ModeBadge } from './components/overlay/Overlays'
 import { CreditsModal, ShortcutsModal } from './components/modals/Modals'
 import { LayersSidebar } from './components/sidebar/LayersSidebar'
 import type { DatedEntry } from './lib/datedSources'
 import type { EsriImageryMeta } from './lib/types'
+import { DEFAULT_BASE, SENTINEL_ID } from './lib/basemaps'
 import './theme/base.css'
 
 type DatedState = { entries: DatedEntry[]; meta: string; index: number } | null
+
+/**
+ * How long the drawer stays up on its own after a grid or pin lands. It has two
+ * sentences to say — there is a drawer, and your grid is in it alongside the
+ * others — so it only has to be legible, not readable. Long enough to clear the
+ * 220ms slide at each end and leave about two seconds of stillness; past that it
+ * stops announcing and starts occupying the map.
+ */
+const LAYERS_PEEK_MS = 2_500
 
 function Shell() {
   const g = useGrid()
@@ -28,13 +39,33 @@ function Shell() {
   const [datedIndex, setDatedIndex] = useState(0)
   const [esriMeta, setEsriMeta] = useState<EsriImageryMeta | null>(null)
   const [layersOpen, setLayersOpen] = useState(false)
+  // Where S returns to. Seeded with the default so a session that starts on
+  // Sentinel (restored state) still has somewhere sensible to toggle back to.
+  const baseBeforeSentinel = useRef(DEFAULT_BASE)
   const layerCount = g.gridLayers.length + g.pins.length
   const previousLayerCount = useRef(0)
+  const peekT = useRef<number | undefined>(undefined)
 
+  /** Stop a peek from expiring — the drawer has been asked for, not just shown. */
+  const holdLayers = useCallback(() => {
+    window.clearTimeout(peekT.current)
+    peekT.current = undefined
+  }, [])
+
+  // A new grid or pin shows the drawer so you can see it land, then hands the
+  // map back. It is a confirmation, not a mode: anything that says you actually
+  // want the drawer — touching it, or opening it yourself — cancels the timer
+  // and it stays until you close it.
   useEffect(() => {
-    if (layerCount > previousLayerCount.current) setLayersOpen(true)
+    if (layerCount > previousLayerCount.current) {
+      setLayersOpen(true)
+      window.clearTimeout(peekT.current)
+      peekT.current = window.setTimeout(() => setLayersOpen(false), LAYERS_PEEK_MS)
+    }
     previousLayerCount.current = layerCount
   }, [layerCount])
+
+  useEffect(() => () => window.clearTimeout(peekT.current), [])
 
   // ---- the hint badge ----
   const [badge, setBadge] = useState('')
@@ -126,6 +157,14 @@ function Shell() {
     document.body.classList.toggle('focus', g.focus)
   }, [g.focus])
 
+  // A dated source seats its stepper inside the picker island, roughly doubling
+  // its width. What that displaces — the island's own row, and the centred
+  // transients above it — sits outside this tree, so the mode goes on the body
+  // the way focus and the phone search already do.
+  useEffect(() => {
+    document.body.classList.toggle('dated', !!dated)
+  }, [dated])
+
   useShortcuts({
     draw: () => {
       g.setPolygonDrawing(false)
@@ -143,6 +182,17 @@ function Shell() {
     brush: () => g.cells.length && g.setPaintMode(g.paintMode === 'brush' ? null : 'brush'),
     eraser: () => g.cells.length && g.setPaintMode(g.paintMode === 'erase' ? null : 'erase'),
     basemap: () => document.querySelector<HTMLButtonElement>('[data-tip="Choose basemap"]')?.click(),
+    // S is a toggle, not just a switch: comparing Sentinel against the imagery
+    // you were on is the whole reason it earned its own key, so pressing it
+    // again puts that imagery back.
+    sentinel: () => {
+      if (g.base === SENTINEL_ID) {
+        g.setBase(baseBeforeSentinel.current)
+      } else {
+        baseBeforeSentinel.current = g.base
+        g.setBase(SENTINEL_ID)
+      }
+    },
     exportKml: () => document.querySelector<HTMLButtonElement>('[data-tip="Export to KML"]')?.click(),
     focus: () => g.setFocus(!g.focus),
     search: () => {
@@ -185,14 +235,17 @@ function Shell() {
         searchOpen={searchOpen}
         setSearchOpen={setSearchOpen}
         layersOpen={layersOpen}
-        onLayers={() => setLayersOpen((open) => !open)}
+        onLayers={() => {
+          holdLayers()
+          setLayersOpen((open) => !open)
+        }}
       />
 
-      <DateControl state={dated} onIndex={setDatedIndex} />
       <EsriDateBadge meta={esriMeta} />
-      <LayersSidebar open={layersOpen} />
+      <LayersSidebar open={layersOpen} onHold={holdLayers} />
       <ModeBadge text={badge} fading={fading} />
       <GridNote />
+      <BasemapPicker dated={dated} onIndex={setDatedIndex} />
       <Toolbox />
       {g.focus && <FocusExit onExit={() => g.setFocus(false)} />}
 

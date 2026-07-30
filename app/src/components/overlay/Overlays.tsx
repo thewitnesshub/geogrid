@@ -39,12 +39,16 @@ interface DateProps {
   onIndex: (i: number) => void
 }
 
-/** One control for all three dated sources — they differ only in their entries. */
+/**
+ * One control for all three dated sources — they differ only in their entries.
+ * Rendered inside the basemap picker's island rather than floating on its own,
+ * so it needs no box and no `app-chrome`: the island is both.
+ */
 export function DateControl({ state, onIndex }: DateProps) {
   if (!state) return null
   const { entries, meta, index } = state
   return (
-    <div className={`${styles.dateCtl} ${styles.show} app-chrome`}>
+    <div className={styles.dateInline}>
       <div className={styles.senRow}>
         <button
           type="button"
@@ -86,7 +90,7 @@ export function EsriDateBadge({ meta }: { meta: EsriImageryMeta | null }) {
   if (!meta) return null
   return (
     <div
-      className={`${styles.dateCtl} ${styles.show} ${styles.esriDate} app-chrome`}
+      className={`${styles.esriDate} app-chrome`}
       title="Imagery acquisition date at map centre"
     >
       <strong>{meta.date}</strong>

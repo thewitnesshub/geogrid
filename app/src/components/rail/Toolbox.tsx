@@ -25,9 +25,10 @@ const PolygonGridIcon = (
     <path d="M12 12h9" />
     <path d="M16 19h6" />
     <path d="M19 22v-6" />
-    <g fill="#000" stroke="#000">
-      <circle cx="12" cy="21" r="1.2" />
-    </g>
+    {/* The vertex marker rides currentColor like every other stroke — hardcoded
+        black, it vanished into the dark theme's glass and took the only thing
+        distinguishing this button from its neighbour with it. */}
+    <circle cx="12" cy="21" r="1.2" fill="currentColor" stroke="currentColor" />
   </svg>
 )
 /* Not a Lucide icon — grid-2x2-plus with the plus swapped for a magnifier, so
@@ -43,10 +44,21 @@ const SearchIcon = (
     <path d="m19.5 19.5 2.5 2.5" />
   </svg>
 )
-const GearIcon = (
+/* Lucide's sliders-horizontal. This button adjusts properties of the grid on
+   screen — its cell size and colour — and sliders say "adjust what you are
+   looking at". The gear it replaces said "app settings", which is the one
+   thing this popover does not hold. */
+const SlidersIcon = (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+    <line x1="21" x2="14" y1="4" y2="4" />
+    <line x1="10" x2="3" y1="4" y2="4" />
+    <line x1="21" x2="12" y1="12" y2="12" />
+    <line x1="8" x2="3" y1="12" y2="12" />
+    <line x1="21" x2="16" y1="20" y2="20" />
+    <line x1="12" x2="3" y1="20" y2="20" />
+    <line x1="14" x2="14" y1="2" y2="6" />
+    <line x1="8" x2="8" y1="10" y2="14" />
+    <line x1="16" x2="16" y1="18" y2="22" />
   </svg>
 )
 const BrushIcon = (
@@ -215,6 +227,13 @@ export function Toolbox() {
         <RegionPopover open={pop === 'region'} onDone={() => setPop(null)} />
       </div>
 
+      {/* The rail seats four kinds of things — tools that make a grid, tools
+          that adjust and mark it, the action that destroys it, and a view mode.
+          The dividers draw those seams; before them the eraser sat one slot
+          from the trash, two deletion metaphors touching where a misread costs
+          the whole grid. */}
+      <div className={styles.railDiv} />
+
       <div className={styles.railItem}>
         <button
           className={`${styles.railBtn} ${pop === 'size' ? styles.active : ''}`}
@@ -225,7 +244,7 @@ export function Toolbox() {
           aria-label="Cell size"
           onClick={() => setPop(pop === 'size' ? null : 'size')}
         >
-          {GearIcon}
+          {SlidersIcon}
         </button>
 
         <div className={`${styles.railPop} ${pop === 'size' ? styles.open : ''}`}>
@@ -289,6 +308,8 @@ export function Toolbox() {
       >
         {EraserIcon}
       </button>
+
+      <div className={styles.railDiv} />
 
       <div className={styles.railItem}>
         <button
