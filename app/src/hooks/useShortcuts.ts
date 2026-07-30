@@ -3,6 +3,7 @@ import { HAS_MOUSE, PAINT_KEY } from '../lib/platform'
 
 export interface ShortcutHandlers {
   draw: () => void
+  polygon: () => void
   region: () => void
   size: () => void
   brush: () => void
@@ -23,6 +24,7 @@ export interface ShortcutHandlers {
  */
 const KEYS: { key: string; run: keyof ShortcutHandlers }[] = [
   { key: 'd', run: 'draw' },
+  { key: 'v', run: 'polygon' },
   { key: 'r', run: 'region' },
   { key: 'c', run: 'size' },
   { key: 'b', run: 'brush' },
@@ -63,6 +65,7 @@ export function SHORTCUT_DOC() {
       group: 'Tools',
       rows: [
         { label: 'Draw a search box', caps: ['D'] },
+        { label: 'Draw a custom grid area', caps: ['V'] },
         { label: 'Fill a region', caps: ['R'] },
         { label: 'Cell size & colour', caps: ['C'] },
         { label: 'Brush over cells', caps: ['B'] },

@@ -1,6 +1,7 @@
 import styles from '../../theme/chrome.module.css'
 import { useGrid } from '../../state/GridStore'
 import type { DatedEntry } from '../../lib/datedSources'
+import type { EsriImageryMeta } from '../../lib/types'
 
 export function ModeBadge({ text, fading }: { text: string; fading: boolean }) {
   if (!text) return null
@@ -77,6 +78,18 @@ export function DateControl({ state, onIndex }: DateProps) {
         </button>
       </div>
       <div className={styles.senMeta}>{meta}</div>
+    </div>
+  )
+}
+
+export function EsriDateBadge({ meta }: { meta: EsriImageryMeta | null }) {
+  if (!meta) return null
+  return (
+    <div
+      className={`${styles.dateCtl} ${styles.show} ${styles.esriDate} app-chrome`}
+      title="Imagery acquisition date at map centre"
+    >
+      <strong>{meta.date}</strong>
     </div>
   )
 }

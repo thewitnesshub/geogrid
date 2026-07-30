@@ -100,7 +100,15 @@ export function RegionPopover({ open, onDone }: { open: boolean; onDone: () => v
               e.preventDefault()
               if (active >= 0 && items[active]) pick(items[active])
             } else if (e.key === 'Escape') {
-              close()
+              // Back out one layer at a time, same as the place search up top:
+              // a suggestion list or a note is something to dismiss first, so
+              // Escape drops that and leaves the query in place to keep typing
+              // against. Only once there is nothing left to clear does it hand
+              // off to onDone and put the tool away — never in the same
+              // keystroke as losing a search you were still composing.
+              e.stopPropagation()
+              if (items.length || note) close()
+              else onDone()
             }
           }}
         />

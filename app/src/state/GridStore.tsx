@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Map as LMap, LatLngBounds } from 'leaflet'
-import type { Cell, Pin } from '../lib/types'
+import type { Cell, GridLayerItem, Pin } from '../lib/types'
 import type { RegionFeature } from '../lib/gridMath'
 import { DEFAULT_GRID_COLOR } from '../lib/platform'
 import { DEFAULT_BASE } from '../lib/basemaps'
@@ -35,6 +35,14 @@ export interface MapActions {
   flyTo: (lat: number, lng: number, zoom?: number) => void
   fitBounds: (b: [[number, number], [number, number]]) => void
   setRegion: (geo: RegionFeature['geometry'], label: string) => void
+  setActiveGrid: (id: string) => void
+  setGridVisible: (id: string, visible: boolean) => void
+  deleteGrids: (ids: string[]) => void
+  hoverGrid: (id: string | null) => void
+  focusGrid: (id: string) => void
+  setPinVisible: (id: string, visible: boolean) => void
+  deletePins: (ids: string[]) => void
+  focusPin: (id: string) => void
 }
 
 interface GridState {
@@ -42,6 +50,10 @@ interface GridState {
   setCells: (c: Cell[]) => void
   pins: Pin[]
   setPins: React.Dispatch<React.SetStateAction<Pin[]>>
+  gridLayers: GridLayerItem[]
+  setGridLayers: (items: GridLayerItem[]) => void
+  activeGridId: string | null
+  setActiveGridId: (id: string | null) => void
 
   gridColor: string
   setGridColor: (c: string) => void
@@ -58,6 +70,8 @@ interface GridState {
 
   drawing: boolean
   setDrawing: (b: boolean) => void
+  polygonDrawing: boolean
+  setPolygonDrawing: (b: boolean) => void
   /**
    * Which stroke tool is in hand, if any. One value rather than a flag per
    * tool, because picking one has to put the other down.
@@ -88,12 +102,15 @@ const Ctx = createContext<GridState | null>(null)
 export function GridProvider({ children }: { children: ReactNode }) {
   const [cells, setCells] = useState<Cell[]>([])
   const [pins, setPins] = useState<Pin[]>([])
+  const [gridLayers, setGridLayers] = useState<GridLayerItem[]>([])
+  const [activeGridId, setActiveGridId] = useState<string | null>(null)
   const [gridColor, setGridColorState] = useState(DEFAULT_GRID_COLOR)
   const [cellKm, setCellKm] = useState(1)
   const [areaBounds, setAreaBounds] = useState<LatLngBounds | null>(null)
   const [regionLabel, setRegionLabel] = useState<string | null>(null)
   const [base, setBase] = useState(DEFAULT_BASE)
   const [drawing, setDrawing] = useState(false)
+  const [polygonDrawing, setPolygonDrawing] = useState(false)
   const [paintMode, setPaintMode] = useState<PaintMode>(null)
   const [focus, setFocus] = useState(false)
   const [gridNote, setGridNote] = useState('')
@@ -112,6 +129,10 @@ export function GridProvider({ children }: { children: ReactNode }) {
       setCells,
       pins,
       setPins,
+      gridLayers,
+      setGridLayers,
+      activeGridId,
+      setActiveGridId,
       gridColor,
       setGridColor,
       cellKm,
@@ -124,6 +145,8 @@ export function GridProvider({ children }: { children: ReactNode }) {
       setBase,
       drawing,
       setDrawing,
+      polygonDrawing,
+      setPolygonDrawing,
       paintMode,
       setPaintMode,
       focus,
@@ -136,7 +159,7 @@ export function GridProvider({ children }: { children: ReactNode }) {
       actions,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cells, pins, gridColor, cellKm, areaBounds, regionLabel, base, drawing, paintMode, focus, gridNote, gridEpoch],
+    [cells, pins, gridLayers, activeGridId, gridColor, cellKm, areaBounds, regionLabel, base, drawing, polygonDrawing, paintMode, focus, gridNote, gridEpoch],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
@@ -147,4 +170,3 @@ export function useGrid() {
   if (!v) throw new Error('useGrid must be used inside GridProvider')
   return v
 }
-

@@ -6,7 +6,7 @@ import { DATED, isDated, type DatedEntry } from '../../lib/datedSources'
 import { buildCellBounds, type RegionFeature } from '../../lib/gridMath'
 import { readStartView, writeView } from '../../lib/storage'
 import { fmtLatLng, earthUrl, sentinelUrl, uid } from '../../lib/geo'
-import type { Cell } from '../../lib/types'
+import type { Cell, EsriImageryMeta } from '../../lib/types'
 import { ContextMenu, type CtxTarget } from './ContextMenu'
 import { useToast } from '../../hooks/useToast'
 
@@ -39,6 +39,8 @@ const ERASER_PATH =
 /** Matched to the pointer hand it swaps places with, so switching tools does
  *  not change how much of the map the cursor covers. */
 const CURSOR_PX = 20
+/** Match Geonotator: a click this close to the first node closes the vector. */
+const VECTOR_CLOSE_PX = 12
 /** The tip of the eraser in the 24-unit viewBox, carried to the rendered size
  *  so the hotspot stays on the tip whatever CURSOR_PX becomes. */
 const TIP = { x: 4, y: 20.5 }
@@ -64,7 +66,19 @@ interface Props {
   onCellMarked: () => void
   onModifierMode: (on: boolean) => void
   onDatedState: (s: { entries: DatedEntry[]; meta: string; index: number } | null) => void
+  onEsriMeta: (meta: EsriImageryMeta | null) => void
   datedIndex: number
+}
+
+interface GridRuntime {
+  id: string
+  name: string
+  bounds: LatLngBounds
+  geo: RegionFeature | null
+  cells: Cell[]
+  layer: L.LayerGroup
+  boundary: L.GeoJSON | null
+  visible: boolean
 }
 
 export function MapCanvas({
@@ -72,6 +86,7 @@ export function MapCanvas({
   onCellMarked,
   onModifierMode,
   onDatedState,
+  onEsriMeta,
   datedIndex,
 }: Props) {
   const host = useRef<HTMLDivElement | null>(null)
@@ -86,16 +101,25 @@ export function MapCanvas({
     dated: null as TileLayer | null,
     grid: L.layerGroup(),
     pinLayer: L.layerGroup(),
-    regionLayer: null as L.GeoJSON | null,
+    pendingBoundary: null as L.GeoJSON | null,
   })
   const cellsRef = useRef<Cell[]>([])
+  const gridsRef = useRef<Map<string, GridRuntime>>(new Map())
+  const activeGridIdRef = useRef<string | null>(null)
+  const hoveredGridRef = useRef<string | null>(null)
+  const gridSerial = useRef(0)
+  const pinMarkers = useRef<Map<string, L.Marker>>(new Map())
   const region = useRef<RegionFeature | null>(null)
   const paint = useRef({ mode: null as 'mark' | 'erase' | null, stroke: false, dragWasOn: false })
   const drawing = useRef(false)
+  const polygonDrawing = useRef(false)
+  const polygonSession = useRef<{ cancel: () => void; finish: () => void } | null>(null)
   const paintMode = useRef<PaintMode>(null)
   const cellKmRef = useRef(g.cellKm)
   const gridColorRef = useRef(g.gridColor)
   const datedToken = useRef(0)
+  const esriMetaToken = useRef(0)
+  const baseRef = useRef(g.base)
 
   // Mirror reactive values the imperative handlers read.
   useEffect(() => {
@@ -107,13 +131,27 @@ export function MapCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [g.gridColor])
   useEffect(() => {
+    baseRef.current = g.base
+  }, [g.base])
+  useEffect(() => {
     drawing.current = g.drawing
     const map = g.mapRef.current
     if (!map) return
     map.getContainer().classList.toggle('drawingbox', g.drawing)
     if (g.drawing) map.dragging.disable()
-    else if (!paintMode.current) map.dragging.enable()
+    else if (!polygonDrawing.current && !paintMode.current) map.dragging.enable()
   }, [g.drawing, g.mapRef])
+  useEffect(() => {
+    polygonDrawing.current = g.polygonDrawing
+    const map = g.mapRef.current
+    if (!map) return
+    map.getContainer().classList.toggle('drawingpolygon', g.polygonDrawing)
+    if (g.polygonDrawing) map.dragging.disable()
+    else {
+      polygonSession.current?.cancel()
+      if (!drawing.current && !paintMode.current) map.dragging.enable()
+    }
+  }, [g.polygonDrawing, g.mapRef])
   useEffect(() => {
     paintMode.current = g.paintMode
     const map = g.mapRef.current
@@ -124,18 +162,43 @@ export function MapCanvas({
     // the cells too, and they carry Leaflet's own pointer cursor.
     el.style.setProperty('--tool-cursor', g.paintMode ? cursorFor(g.paintMode) : '')
     if (g.paintMode) map.dragging.disable()
-    else if (!drawing.current) map.dragging.enable()
+    else if (!drawing.current && !polygonDrawing.current) map.dragging.enable()
   }, [g.paintMode, g.mapRef])
 
-  const styleFor = (c: Cell): L.PathOptions =>
-    c.searched
-      ? { color: gridColorRef.current, weight: 2, fillColor: gridColorRef.current, fillOpacity: 0.45 }
-      : { color: gridColorRef.current, weight: 1.6, fillColor: gridColorRef.current, fillOpacity: 0 }
+  const styleFor = (c: Cell): L.PathOptions => {
+    const hot = hoveredGridRef.current === c.gridId
+    return c.searched
+      ? { color: gridColorRef.current, weight: hot ? 3.4 : 2, fillColor: gridColorRef.current, fillOpacity: hot ? 0.58 : 0.45 }
+      : { color: gridColorRef.current, weight: hot ? 3 : 1.6, fillColor: gridColorRef.current, fillOpacity: hot ? 0.12 : 0 }
+  }
 
   const paintCell = (c: Cell) => c.rect.setStyle(styleFor(c))
 
   const commitCells = () => {
+    cellsRef.current = [...gridsRef.current.values()].flatMap((grid) => grid.cells)
     g.setCells([...cellsRef.current])
+  }
+
+  const commitGridLayers = () => {
+    g.setGridLayers(
+      [...gridsRef.current.values()].map((grid) => ({
+        id: grid.id,
+        name: grid.name,
+        bounds: grid.bounds,
+        cellCount: grid.cells.length,
+        visible: grid.visible,
+      })),
+    )
+  }
+
+  const activateGrid = (id: string) => {
+    const grid = gridsRef.current.get(id)
+    if (!grid) return
+    activeGridIdRef.current = id
+    g.setActiveGridId(id)
+    region.current = grid.geo
+    g.setAreaBounds(grid.bounds)
+    g.setRegionLabel(grid.geo ? grid.name : null)
   }
 
   /**
@@ -154,6 +217,62 @@ export function MapCanvas({
     onCellMarked()
   }
 
+  const loadEsriMetadata = async () => {
+    // Bump before the base check so switching away invalidates an Esri request
+    // that may still be in flight.
+    const token = ++esriMetaToken.current
+    const map = g.mapRef.current
+    if (!map || (baseRef.current !== 'imagery' && baseRef.current !== 'hybrid')) {
+      onEsriMeta(null)
+      return
+    }
+    const c = map.getCenter()
+    const zoom = map.getZoom()
+    const q = new URLSearchParams({
+      geometry: `${c.lng},${c.lat}`,
+      geometryType: 'esriGeometryPoint',
+      inSR: '4326',
+      spatialRel: 'esriSpatialRelIntersects',
+      outFields: 'SRC_DATE,SRC_DATE2,NICE_NAME,NICE_DESC,MinMapLevel,MaxMapLevel,DrawOrder',
+      returnGeometry: 'false',
+      f: 'json',
+    })
+    try {
+      const res = await fetch(
+        `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/0/query?${q}`,
+      )
+      const body = await res.json()
+      if (token !== esriMetaToken.current) return
+      const matches = (body.features ?? [])
+        .map((f: { attributes?: Record<string, unknown> }) => f.attributes ?? {})
+        .filter((a: Record<string, unknown>) => {
+          const min = Number(a.MinMapLevel ?? 0)
+          const max = Number(a.MaxMapLevel ?? 99)
+          return zoom >= min && zoom <= max
+        })
+        .sort(
+          (a: Record<string, unknown>, b: Record<string, unknown>) =>
+            Number(b.DrawOrder ?? 0) - Number(a.DrawOrder ?? 0),
+        )
+      const a = matches[0]
+      if (!a) return onEsriMeta(null)
+      const raw = Number(a.SRC_DATE ?? 0)
+      const date =
+        Number.isFinite(Number(a.SRC_DATE2)) && Number(a.SRC_DATE2) > 0
+          ? new Date(Number(a.SRC_DATE2)).toISOString().slice(0, 10)
+          : /^\d{8}$/.test(String(raw))
+            ? `${String(raw).slice(0, 4)}-${String(raw).slice(4, 6)}-${String(raw).slice(6, 8)}`
+            : ''
+      if (!date) return onEsriMeta(null)
+      onEsriMeta({
+        date,
+        source: String(a.NICE_DESC || a.NICE_NAME || 'Esri World Imagery'),
+      })
+    } catch {
+      if (token === esriMetaToken.current) onEsriMeta(null)
+    }
+  }
+
   // ---------- map lifecycle ----------
   useEffect(() => {
     if (!host.current || g.mapRef.current) return
@@ -169,26 +288,128 @@ export function MapCanvas({
     layers.current.pinLayer.addTo(map)
 
     let saveTimer: number | undefined
+    let metaTimer: number | undefined
     map.on('moveend zoomend', () => {
       window.clearTimeout(saveTimer)
       saveTimer = window.setTimeout(() => {
         const c = map.getCenter()
         writeView(c.lat, c.lng, map.getZoom())
       }, 400)
+      window.clearTimeout(metaTimer)
+      metaTimer = window.setTimeout(loadEsriMetadata, 350)
     })
+    loadEsriMetadata()
 
     map.on('contextmenu', (e: L.LeafletMouseEvent) => {
+      if (polygonDrawing.current) return
       L.DomEvent.preventDefault(e.originalEvent)
       setCtx({ latlng: e.latlng, x: e.containerPoint.x, y: e.containerPoint.y })
     })
-    map.on('click', () => setCtx(null))
+    map.on('click', (e: L.LeafletMouseEvent) => {
+      setCtx(null)
+      if (!polygonDrawing.current) return
+      // Geonotator's proven close interaction: test every canvas click in
+      // screen pixels instead of asking a tiny SVG marker to receive the
+      // event. This remains the same comfortable target at every map zoom.
+      if (polygonPoints.length >= 3) {
+        const first = map.latLngToContainerPoint(polygonPoints[0])
+        if (e.containerPoint.distanceTo(first) < VECTOR_CLOSE_PX) {
+          finishPolygon()
+          return
+        }
+      }
+      addPolygonPoint(e.latlng)
+    })
     map.on('movestart zoomstart', () => setCtx(null))
+
+    // ---- draw a custom vector boundary ----
+    let polygonPoints: LatLng[] = []
+    let polygonLine: L.Polyline | null = null
+    let polygonPreview: L.Polyline | null = null
+    let vertexLayer: L.LayerGroup | null = null
+
+    const clearPolygonDraft = () => {
+      if (polygonLine) map.removeLayer(polygonLine)
+      if (polygonPreview) map.removeLayer(polygonPreview)
+      if (vertexLayer) map.removeLayer(vertexLayer)
+      polygonLine = null
+      polygonPreview = null
+      vertexLayer = null
+      polygonPoints = []
+    }
+
+    const draftStyle = () => ({
+      color: gridColorRef.current,
+      weight: 2,
+      dashArray: '6,5',
+      fill: false,
+    })
+
+    const addPolygonPoint = (point: LatLng) => {
+      const previous = polygonPoints[polygonPoints.length - 1]
+      if (previous && map.distance(previous, point) < 0.25) return
+      polygonPoints.push(point)
+      if (!vertexLayer) vertexLayer = L.layerGroup().addTo(map)
+      const marker = L.circleMarker(point, {
+        radius: polygonPoints.length === 1 ? 5 : 3.5,
+        color: gridColorRef.current,
+        weight: 2,
+        fillColor: token('--osw-surface'),
+        fillOpacity: 1,
+        bubblingMouseEvents: true,
+      }).addTo(vertexLayer)
+      if (polygonPoints.length === 1) {
+        marker.bindTooltip('Click to close shape', { direction: 'top', offset: [0, -5] })
+      }
+      if (!polygonLine) polygonLine = L.polyline(polygonPoints, draftStyle()).addTo(map)
+      else polygonLine.setLatLngs(polygonPoints)
+    }
+
+    const finishPolygon = () => {
+      if (!polygonDrawing.current || polygonPoints.length < 3) return
+      const ring = polygonPoints.map((p) => [p.lng, p.lat])
+      ring.push([...ring[0]])
+      const feature = {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [ring] },
+      } as RegionFeature
+      clearPolygonDraft()
+      const boundary = L.geoJSON(feature.geometry as never, {
+        style: { color: token('--osw-brand'), weight: 2, fill: false, dashArray: '6,5' },
+      })
+      layers.current.pendingBoundary = boundary
+      g.setRegionLabel('Custom area')
+      commitArea(boundary.getBounds(), feature)
+      g.setPolygonDrawing(false)
+    }
+
+    polygonSession.current = {
+      cancel: clearPolygonDraft,
+      finish: finishPolygon,
+    }
+
+    map.on('mousemove', (e: L.LeafletMouseEvent) => {
+      if (!polygonDrawing.current || !polygonPoints.length) return
+      const points = [polygonPoints[polygonPoints.length - 1], e.latlng]
+      if (!polygonPreview) polygonPreview = L.polyline(points, draftStyle()).addTo(map)
+      else polygonPreview.setLatLngs(points)
+    })
+    map.on('dblclick', (e: L.LeafletMouseEvent) => {
+      if (!polygonDrawing.current) return
+      L.DomEvent.preventDefault(e.originalEvent)
+      finishPolygon()
+    })
+    const finishOnEnter = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && polygonDrawing.current) finishPolygon()
+    }
+    document.addEventListener('keydown', finishOnEnter)
 
     // ---- draw a box ----
     let dragStart: LatLng | null = null
     let temp: Rectangle | null = null
     map.on('mousedown', (e: L.LeafletMouseEvent) => {
-      if (!drawing.current) return
+      if (!drawing.current || polygonDrawing.current) return
       dragStart = e.latlng
       temp = L.rectangle(L.latLngBounds(dragStart, dragStart), {
         color: gridColorRef.current,
@@ -211,6 +432,10 @@ export function MapCanvas({
     })
 
     return () => {
+      document.removeEventListener('keydown', finishOnEnter)
+      window.clearTimeout(metaTimer)
+      clearPolygonDraft()
+      polygonSession.current = null
       map.remove()
       g.mapRef.current = null
     }
@@ -221,28 +446,39 @@ export function MapCanvas({
   const commitArea = (b: LatLngBounds, geo: RegionFeature | null) => {
     const map = g.mapRef.current
     if (!map) return
-    if (!geo && layers.current.regionLayer) {
-      map.removeLayer(layers.current.regionLayer)
-      layers.current.regionLayer = null
-      region.current = null
-      g.setRegionLabel(null)
-    }
     region.current = geo
-    // No outline for a drawn box: the grid is the area now. A square-celled
-    // lattice can never land exactly on a hand-drawn rectangle, so an outline
-    // only ever advertises the gap between the two.
     g.setAreaBounds(b)
     g.setDrawing(false)
-    generate(b, geo)
+    g.setPolygonDrawing(false)
+    const id = uid()
+    const name = `Grid ${++gridSerial.current}`
+    const layer = L.layerGroup()
+    layer.addTo(layers.current.grid)
+    const boundary = geo ? layers.current.pendingBoundary : null
+    layers.current.pendingBoundary = null
+    if (boundary) boundary.addTo(layer)
+    gridsRef.current.set(id, {
+      id,
+      name,
+      bounds: b,
+      geo,
+      cells: [],
+      layer,
+      boundary,
+      visible: true,
+    })
+    activateGrid(id)
+    generate(b, geo, id)
     onGridCreated()
     // Both routes into a grid end here — the drawn box and the filled region —
     // which is what makes them behave the same for the chrome downstream.
     g.noteGridCreated()
   }
 
-  const generate = (b: LatLngBounds | null, geo: RegionFeature | null) => {
+  const generate = (b: LatLngBounds | null, geo: RegionFeature | null, targetId = activeGridIdRef.current) => {
     const map = g.mapRef.current
-    if (!map || !b) return
+    const grid = targetId ? gridsRef.current.get(targetId) : null
+    if (!map || !b || !grid) return
     const { cells: boundsList, cellKm } = buildCellBounds(b, cellKmRef.current, geo)
     if (cellKm !== cellKmRef.current) {
       cellKmRef.current = cellKm
@@ -250,16 +486,22 @@ export function MapCanvas({
     }
     // keep marks across a regeneration by south-west corner
     const wasSearched = new Set(
-      cellsRef.current.filter((c) => c.searched).map((c) => c.bounds.getSouthWest().toString()),
+      grid.cells.filter((c) => c.searched).map((c) => c.bounds.getSouthWest().toString()),
     )
-    layers.current.grid.clearLayers()
+    grid.layer.clearLayers()
+    if (grid.boundary) grid.boundary.addTo(grid.layer)
     const next: Cell[] = boundsList.map((cb) => {
-      const cell: Cell = { rect: L.rectangle(cb), searched: wasSearched.has(cb.getSouthWest().toString()), bounds: cb }
+      const cell: Cell = {
+        rect: L.rectangle(cb),
+        searched: wasSearched.has(cb.getSouthWest().toString()),
+        bounds: cb,
+        gridId: grid.id,
+      }
       cell.rect.setStyle(styleFor(cell))
-      cell.rect.addTo(layers.current.grid)
+      cell.rect.addTo(grid.layer)
 
       cell.rect.on('click', () => {
-        if (paint.current.stroke) return
+        if (paint.current.stroke || drawing.current || polygonDrawing.current) return
         cell.searched = !cell.searched
         paintCell(cell)
         onCellMarked()
@@ -286,8 +528,11 @@ export function MapCanvas({
       })
       return cell
     })
-    cellsRef.current = next
+    grid.cells = next
+    grid.bounds = b
+    grid.geo = geo
     commitCells()
+    commitGridLayers()
     g.setGridNote('')
   }
 
@@ -296,7 +541,8 @@ export function MapCanvas({
     const map = g.mapRef.current
     if (!map) return
     const el = map.getContainer()
-    const cellAt = (ll: LatLng) => cellsRef.current.find((c) => c.bounds.contains(ll)) ?? null
+    const cellAt = (ll: LatLng) =>
+      cellsRef.current.find((c) => gridsRef.current.get(c.gridId)?.visible && c.bounds.contains(ll)) ?? null
     let painting = false
 
     const down = (e: PointerEvent) => {
@@ -345,7 +591,7 @@ export function MapCanvas({
         map.dragging.disable()
         paint.current.dragWasOn = true
       }
-      if (cellsRef.current.length && !drawing.current && !paintMode.current) onModifierMode(true)
+      if (cellsRef.current.length && !drawing.current && !polygonDrawing.current && !paintMode.current) onModifierMode(true)
     }
     const end = () => {
       paint.current.mode = null
@@ -395,6 +641,12 @@ export function MapCanvas({
     L_.dated = null
 
     if (isDated(g.base)) {
+      loadEsriMetadata()
+      // A same-day Sentinel mosaic still has gaps at scene edges, and the
+      // service intentionally stops rendering useful overviews below z9.
+      // Keep ordinary imagery underneath so transparent no-data pixels and
+      // zoomed-out views remain geographic rather than black or map-grey.
+      if (g.base === 'sentinelDated') L_.baseLayer = bases.imagery().addTo(map)
       loadDated(g.base)
       return
     }
@@ -402,6 +654,7 @@ export function MapCanvas({
     const id = g.base === 'hybrid' ? 'imagery' : g.base
     L_.baseLayer = bases[id]().addTo(map)
     if (g.base === 'hybrid') L_.labels = labelsOverlay().addTo(map)
+    loadEsriMetadata()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [g.base])
 
@@ -457,17 +710,19 @@ export function MapCanvas({
     g.actions.current = {
       generate: (km) => {
         if (km !== undefined) cellKmRef.current = km
-        generate(g.areaBounds, region.current)
+        const grid = activeGridIdRef.current ? gridsRef.current.get(activeGridIdRef.current) : null
+        if (grid) generate(grid.bounds, grid.geo, grid.id)
       },
       clearAll: () => {
-        const map = g.mapRef.current
         layers.current.grid.clearLayers()
+        gridsRef.current.clear()
         cellsRef.current = []
-        if (map && layers.current.regionLayer) map.removeLayer(layers.current.regionLayer)
-        layers.current.regionLayer = null
+        activeGridIdRef.current = null
         region.current = null
         g.setAreaBounds(null)
         g.setRegionLabel(null)
+        g.setActiveGridId(null)
+        g.setGridLayers([])
         g.setGridNote('')
         commitCells()
       },
@@ -478,6 +733,7 @@ export function MapCanvas({
        */
       clearPins: () => {
         layers.current.pinLayer.clearLayers()
+        pinMarkers.current.clear()
         g.setPins([])
       },
       /** Keeps the grid and the area, and only takes the marks off it. */
@@ -495,7 +751,6 @@ export function MapCanvas({
       setRegion: (geo, label) => {
         const map = g.mapRef.current
         if (!map) return
-        if (layers.current.regionLayer) map.removeLayer(layers.current.regionLayer)
         const feature = { type: 'Feature', properties: {}, geometry: geo } as RegionFeature
         // The accent, not the grid colour. The outline is not part of the grid
         // — it is the boundary the grid was cut from — so it should not move
@@ -504,11 +759,87 @@ export function MapCanvas({
         // reading it once here is safe.
         const gj = L.geoJSON(geo as never, {
           style: { color: token('--osw-brand'), weight: 2, fill: false, dashArray: '6,5' },
-        }).addTo(map)
-        layers.current.regionLayer = gj
+        })
+        layers.current.pendingBoundary = gj
         g.setRegionLabel(label)
         map.fitBounds(gj.getBounds())
         commitArea(gj.getBounds(), feature)
+      },
+      setActiveGrid: activateGrid,
+      setGridVisible: (id, visible) => {
+        const grid = gridsRef.current.get(id)
+        if (!grid || grid.visible === visible) return
+        grid.visible = visible
+        if (visible) grid.layer.addTo(layers.current.grid)
+        else layers.current.grid.removeLayer(grid.layer)
+        commitGridLayers()
+      },
+      deleteGrids: (ids) => {
+        const doomed = new Set(ids)
+        doomed.forEach((id) => {
+          const grid = gridsRef.current.get(id)
+          if (grid) layers.current.grid.removeLayer(grid.layer)
+          gridsRef.current.delete(id)
+        })
+        if (activeGridIdRef.current && doomed.has(activeGridIdRef.current)) {
+          const next = [...gridsRef.current.values()].at(-1) ?? null
+          if (next) activateGrid(next.id)
+          else {
+            activeGridIdRef.current = null
+            region.current = null
+            g.setActiveGridId(null)
+            g.setAreaBounds(null)
+            g.setRegionLabel(null)
+          }
+        }
+        commitCells()
+        commitGridLayers()
+      },
+      hoverGrid: (id) => {
+        const before = hoveredGridRef.current
+        hoveredGridRef.current = id
+        if (before) gridsRef.current.get(before)?.cells.forEach(paintCell)
+        if (id) gridsRef.current.get(id)?.cells.forEach(paintCell)
+        gridsRef.current.forEach((grid) => {
+          if (!grid.boundary) return
+          grid.boundary.setStyle({
+            color: token('--osw-brand'),
+            weight: id === grid.id ? 4 : 2,
+            fill: false,
+            dashArray: '6,5',
+          })
+        })
+      },
+      focusGrid: (id) => {
+        const grid = gridsRef.current.get(id)
+        if (!grid) return
+        activateGrid(id)
+        if (!grid.visible) {
+          grid.visible = true
+          grid.layer.addTo(layers.current.grid)
+          commitGridLayers()
+        }
+        g.mapRef.current?.fitBounds(grid.bounds, { padding: [40, 40] })
+      },
+      setPinVisible: (id, visible) => {
+        const marker = pinMarkers.current.get(id)
+        if (!marker) return
+        if (visible) marker.addTo(layers.current.pinLayer)
+        else layers.current.pinLayer.removeLayer(marker)
+        g.setPins((pins) => pins.map((pin) => (pin.id === id ? { ...pin, visible } : pin)))
+      },
+      deletePins: (ids) => {
+        const doomed = new Set(ids)
+        doomed.forEach((id) => {
+          const marker = pinMarkers.current.get(id)
+          if (marker) layers.current.pinLayer.removeLayer(marker)
+          pinMarkers.current.delete(id)
+        })
+        g.setPins((pins) => pins.filter((pin) => !doomed.has(pin.id)))
+      },
+      focusPin: (id) => {
+        const pin = g.pins.find((item) => item.id === id)
+        if (pin) g.mapRef.current?.setView(pin.latlng, Math.max(g.mapRef.current.getZoom(), 16))
       },
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -537,7 +868,8 @@ export function MapCanvas({
         `<div class="r"><a href="${earthUrl(ll)}" target="_blank" rel="noopener">Google Earth</a>` +
         `<a href="${sentinelUrl(ll, map.getZoom())}" target="_blank" rel="noopener">Sentinel</a></div></div>`,
     )
-    g.setPins((p) => [...p, { id, latlng: ll }])
+    pinMarkers.current.set(id, marker)
+    g.setPins((p) => [...p, { id, latlng: ll, visible: true }])
   }
 
   return (

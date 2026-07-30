@@ -88,7 +88,9 @@ a.link {
    well, because the cells carry Leaflet's own pointer cursor and would
    otherwise punch a hole in the tool right where you are using it. */
 .mapCanvas.drawingbox,
-.mapCanvas.drawingbox .leaflet-interactive {
+.mapCanvas.drawingbox .leaflet-interactive,
+.mapCanvas.drawingpolygon,
+.mapCanvas.drawingpolygon .leaflet-interactive {
   cursor: crosshair;
 }
 .mapCanvas.painting,
@@ -99,7 +101,8 @@ a.link {
    hands the gesture to the browser and kills the pointermove stream mid-stroke.
    Draw and paint modes both turn dragging off on purpose, so claim it back. */
 .mapCanvas.painting,
-.mapCanvas.drawingbox {
+.mapCanvas.drawingbox,
+.mapCanvas.drawingpolygon {
   touch-action: none;
 }
 

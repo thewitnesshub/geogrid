@@ -25,7 +25,7 @@ export interface DatedSource {
 const STAC = 'https://planetarycomputer.microsoft.com/api/stac/v1/search'
 const MOSAIC_REG = 'https://planetarycomputer.microsoft.com/api/data/v1/mosaic/register'
 const MOSAIC_TILE =
-  'https://planetarycomputer.microsoft.com/api/data/v1/mosaic/{id}/tiles/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&assets=visual'
+  'https://planetarycomputer.microsoft.com/api/data/v1/mosaic/tiles/{id}/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&assets=visual&asset_bidx=visual%7C1%2C2%2C3&nodata=0&format=png'
 const GIBS =
   'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{layer}/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg'
 const WAYBACK_WMTS =
@@ -45,6 +45,10 @@ async function sentinelMosaic(day: string): Promise<TileLayer> {
     L.tileLayer(MOSAIC_TILE.replace('{id}', id), {
       // Sentinel-2 is 10 m/px, which is z14. Asking the tiler for anything
       // deeper just makes it upsample server-side; let Leaflet do it locally.
+      // Planetary Computer's natural-colour render starts at z9. Below that,
+      // leave this layer out and let the reference imagery underneath carry
+      // the overview instead of stretching sparse Sentinel coverage into grey.
+      minZoom: 9,
       maxZoom: 19,
       maxNativeZoom: 14,
       attribution: `Sentinel-2 L2A ${day} — Copernicus, via Microsoft Planetary Computer`,

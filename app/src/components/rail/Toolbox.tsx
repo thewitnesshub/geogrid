@@ -18,6 +18,18 @@ const GridIcon = (
     <path d="M19 22v-6" />
   </svg>
 )
+const PolygonGridIcon = (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7" />
+    <path d="M12 3v9" />
+    <path d="M12 12h9" />
+    <path d="M16 19h6" />
+    <path d="M19 22v-6" />
+    <g fill="#000" stroke="#000">
+      <circle cx="12" cy="21" r="1.2" />
+    </g>
+  </svg>
+)
 /* Not a Lucide icon — grid-2x2-plus with the plus swapped for a magnifier, so
    the two tools that make a grid read as a pair: one draws the area, one looks
    it up. The frame is grid-2x2-plus's own path, unchanged, so the only thing
@@ -164,10 +176,29 @@ export function Toolbox() {
         aria-label="Draw a search box"
         onClick={() => {
           setPop(null)
+          g.setPolygonDrawing(false)
+          g.setPaintMode(null)
           g.setDrawing(!g.drawing)
         }}
       >
         {GridIcon}
+      </button>
+
+      <button
+        className={`${styles.railBtn} ${g.polygonDrawing ? styles.active : ''}`}
+        type="button"
+        data-tip="Draw a custom grid area"
+        data-tip-key="V"
+        aria-label="Draw a custom grid area"
+        onClick={() => {
+          setPop(null)
+          const on = !g.polygonDrawing
+          g.setDrawing(false)
+          g.setPaintMode(null)
+          g.setPolygonDrawing(on)
+        }}
+      >
+        {PolygonGridIcon}
       </button>
 
       <div className={styles.railItem}>

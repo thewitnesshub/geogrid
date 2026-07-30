@@ -141,10 +141,17 @@
   flex: 0 0 auto;
 }
 /* Ghost hover: neutral wash, never the accent — the accent here would claim one
-   of its four jobs without doing any of them. */
+   of its four jobs without doing any of them.
+
+   The wash is layered over the surface, not swapped for it. --osw-hover is a 5%
+   ink meant to sit on top of something; assigning it to `background` replaced
+   the button's opaque fill, so hovering turned the island 95% transparent and
+   the map showed straight through it. The rail buttons can assign it directly
+   because they are transparent by default and composite against the glass bar
+   behind them — these are their own opaque islands, so they have to stack it. */
 .chromeBtn:hover:not(:disabled) {
   border-color: var(--osw-border-strong);
-  background: var(--osw-hover);
+  background-image: linear-gradient(var(--osw-hover), var(--osw-hover));
 }
 /* Held open: the wash + its mandatory hairline, and it outranks hover so the
    button you are holding does not grey out under the pointer. */
@@ -428,6 +435,30 @@
   color: var(--osw-text-muted);
   margin-top: 6px;
   line-height: 1.4;
+}
+.esriDate {
+  top: auto;
+  right: 6px;
+  bottom: calc(20px + var(--osw-safe-b));
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  width: auto;
+  max-width: calc(100vw - 12px);
+  padding: 3px 6px;
+  border-radius: var(--osw-radius-xs);
+  box-shadow: var(--osw-shadow-chip);
+  color: var(--osw-text-muted);
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.esriDate strong {
+  color: var(--osw-text);
+  font-family: var(--osw-font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Bottom icon rail ---------- */
@@ -979,6 +1010,12 @@
   }
   .dateCtl {
     width: min(236px, calc(100vw - 24px));
+  }
+  .esriDate,
+  :global(body.searchopen) .esriDate {
+    top: auto;
+    bottom: calc(20px + var(--osw-safe-b));
+    width: auto;
   }
   .modeBadge {
     width: max-content;

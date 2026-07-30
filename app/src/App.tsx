@@ -8,9 +8,11 @@ import { HAS_MOUSE, PAINT_KEY } from './lib/platform'
 import { MapCanvas } from './components/map/MapCanvas'
 import { TopBar } from './components/topbar/TopBar'
 import { Toolbox } from './components/rail/Toolbox'
-import { DateControl, FocusExit, GridNote, ModeBadge } from './components/overlay/Overlays'
+import { DateControl, EsriDateBadge, FocusExit, GridNote, ModeBadge } from './components/overlay/Overlays'
 import { CreditsModal, ShortcutsModal } from './components/modals/Modals'
+import { LayersSidebar } from './components/sidebar/LayersSidebar'
 import type { DatedEntry } from './lib/datedSources'
+import type { EsriImageryMeta } from './lib/types'
 import './theme/base.css'
 
 type DatedState = { entries: DatedEntry[]; meta: string; index: number } | null
@@ -24,6 +26,15 @@ function Shell() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [dated, setDated] = useState<DatedState>(null)
   const [datedIndex, setDatedIndex] = useState(0)
+  const [esriMeta, setEsriMeta] = useState<EsriImageryMeta | null>(null)
+  const [layersOpen, setLayersOpen] = useState(false)
+  const layerCount = g.gridLayers.length + g.pins.length
+  const previousLayerCount = useRef(0)
+
+  useEffect(() => {
+    if (layerCount > previousLayerCount.current) setLayersOpen(true)
+    previousLayerCount.current = layerCount
+  }, [layerCount])
 
   // ---- the hint badge ----
   const [badge, setBadge] = useState('')
@@ -85,18 +96,19 @@ function Shell() {
   const onModifierMode = useCallback(
     (on: boolean) => {
       if (on) {
-        if (g.drawing || g.paintMode) return
+        if (g.drawing || g.polygonDrawing || g.paintMode) return
         showBadge('Brush mode · drag across cells', 'mod')
       } else clearBadge('mod')
     },
-    [g.drawing, g.paintMode, showBadge, clearBadge],
+    [g.drawing, g.polygonDrawing, g.paintMode, showBadge, clearBadge],
   )
 
   useEffect(() => {
     if (g.drawing) showBadge('Drag a box on the map to draw your search area', 'draw')
+    else if (g.polygonDrawing) showBadge('Click to draw corners · click the first point to close', 'draw')
     else clearBadge('draw')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [g.drawing])
+  }, [g.drawing, g.polygonDrawing])
 
   useEffect(() => {
     if (g.paintMode === 'brush') {
@@ -115,7 +127,17 @@ function Shell() {
   }, [g.focus])
 
   useShortcuts({
-    draw: () => g.setDrawing(!g.drawing),
+    draw: () => {
+      g.setPolygonDrawing(false)
+      g.setPaintMode(null)
+      g.setDrawing(!g.drawing)
+    },
+    polygon: () => {
+      const on = !g.polygonDrawing
+      g.setDrawing(false)
+      g.setPaintMode(null)
+      g.setPolygonDrawing(on)
+    },
     region: () => document.querySelector<HTMLButtonElement>('[data-tip="Fill a region"]')?.click(),
     size: () => document.querySelector<HTMLButtonElement>('[data-tip="Cell size"]')?.click(),
     brush: () => g.cells.length && g.setPaintMode(g.paintMode === 'brush' ? null : 'brush'),
@@ -135,6 +157,7 @@ function Shell() {
       // back out one layer at a time
       if (modal) return setModal(null)
       if (g.focus) return g.setFocus(false)
+      if (g.polygonDrawing) return g.setPolygonDrawing(false)
       if (g.drawing) g.setDrawing(false)
       if (g.paintMode) g.setPaintMode(null)
     },
@@ -150,6 +173,7 @@ function Shell() {
           setDated(s)
           if (s) setDatedIndex(s.index)
         }}
+        onEsriMeta={setEsriMeta}
         datedIndex={datedIndex}
       />
 
@@ -160,9 +184,13 @@ function Shell() {
         onCredits={() => setModal('credits')}
         searchOpen={searchOpen}
         setSearchOpen={setSearchOpen}
+        layersOpen={layersOpen}
+        onLayers={() => setLayersOpen((open) => !open)}
       />
 
       <DateControl state={dated} onIndex={setDatedIndex} />
+      <EsriDateBadge meta={esriMeta} />
+      <LayersSidebar open={layersOpen} />
       <ModeBadge text={badge} fading={fading} />
       <GridNote />
       <Toolbox />
